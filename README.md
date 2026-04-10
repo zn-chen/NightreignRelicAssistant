@@ -84,15 +84,15 @@ nra
 
 OCR 模型查找顺序如下：
 
-1. 优先使用 `resources/models/`
-2. 如果不存在，则回退到 `参考/NRrelics/resources/models/`
+1. 优先使用 `OCR/PP-OCRv4/models/`
+2. 如果不存在，则回退到 `resources/models/`
+3. 如果仍不存在，则回退到 `参考/NRrelics/resources/models/`
 
-当前仓库还保留了 `OCR/PP-OCRv4/models/` 目录，便于你自行管理模型文件；如果要让程序直接使用本仓库内模型，建议把模型放到 `resources/models/` 下。
+当前默认就是直接使用 `OCR/PP-OCRv4/models/` 下的三个 ONNX 模型文件。
 
-词条库默认优先读取：
+词条库默认直接从 `data/` 目录读取。
 
-1. `resources/vocab/`
-2. 如果缺失，则回退到 `参考/NRrelics/data/`
+如果你后续要补充词条文本文件，请将它们放在 `data/` 下，由 `VocabularyLoader` 直接加载。
 
 ## 运行期数据
 

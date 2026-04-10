@@ -4,13 +4,13 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from infra.system.paths import get_reference_data_dir, get_vocab_dir
+from infra.system.paths import get_data_dir
 
 
 class VocabularyLoader:
     def __init__(self, primary_dir: Path | None = None, fallback_dir: Path | None = None):
-        self.primary_dir = primary_dir or get_vocab_dir()
-        self.fallback_dir = fallback_dir or get_reference_data_dir()
+        self.primary_dir = primary_dir or get_data_dir()
+        self.fallback_dir = fallback_dir
         self._cache: dict[tuple[str, ...], list[str]] = {}
 
     def load(self, filenames: list[str]) -> list[str]:
@@ -21,8 +21,12 @@ class VocabularyLoader:
         results: list[str] = []
         seen: set[str] = set()
 
+        search_dirs = [self.primary_dir]
+        if self.fallback_dir is not None:
+            search_dirs.append(self.fallback_dir)
+
         for filename in filenames:
-            for base_dir in (self.primary_dir, self.fallback_dir):
+            for base_dir in search_dirs:
                 path = base_dir / filename
                 if not path.exists():
                     continue
