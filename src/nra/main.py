@@ -10,6 +10,20 @@ def main():
 
     app = QApplication(sys.argv)
 
+    app.setStyleSheet("""
+        QGroupBox {
+            font-size: 14px;
+            font-weight: bold;
+            margin-top: 8px;
+            padding-top: 16px;
+        }
+        QGroupBox::title {
+            subcontrol-origin: margin;
+            subcontrol-position: top left;
+            padding: 0 6px;
+        }
+    """)
+
     data_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "data")
     data_dir = os.path.normpath(data_dir)
 
