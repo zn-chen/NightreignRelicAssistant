@@ -4,8 +4,9 @@ import json
 import os
 from PySide6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel,
-    QLineEdit, QPushButton, QFileDialog, QGroupBox,
+    QLineEdit, QPushButton, QFileDialog,
 )
+from nra.ui.widgets.helpers import make_card
 
 
 class SettingsPage(QWidget):
@@ -28,11 +29,12 @@ class SettingsPage(QWidget):
 
     def _init_ui(self):
         layout = QVBoxLayout(self)
+        layout.setContentsMargins(12, 20, 12, 12)
+        layout.setSpacing(12)
 
-        paths_group = QGroupBox("路径配置")
-        paths_layout = QVBoxLayout(paths_group)
+        # 路径配置
+        paths_card, paths_layout = make_card("路径配置")
 
-        # 词条库路径
         vocab_layout = QHBoxLayout()
         vocab_layout.addWidget(QLabel("词条库目录:"))
         self._vocab_dir_input = QLineEdit(self._settings.get("vocab_dir", "data"))
@@ -43,7 +45,6 @@ class SettingsPage(QWidget):
         vocab_layout.addWidget(vocab_browse)
         paths_layout.addLayout(vocab_layout)
 
-        # 数据存储路径
         data_layout = QHBoxLayout()
         data_layout.addWidget(QLabel("数据存储目录:"))
         self._data_dir_input = QLineEdit(self._settings.get("data_dir", "data"))
@@ -54,7 +55,7 @@ class SettingsPage(QWidget):
         data_layout.addWidget(data_browse)
         paths_layout.addLayout(data_layout)
 
-        layout.addWidget(paths_group)
+        layout.addWidget(paths_card)
         layout.addStretch()
 
     def _browse_vocab_dir(self):

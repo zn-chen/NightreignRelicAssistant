@@ -63,6 +63,9 @@ class BuildPage(ListDetailLayout):
         # 右侧
         rl = self._right_layout
 
+        from nra.ui.widgets.helpers import make_card
+        affix_card, affix_layout = make_card("词条配置")
+
         normal_vocab = self._vl.load(["normal.txt", "normal_special.txt"])
         deepnight_pos_vocab = self._vl.load(["deepnight_pos.txt"])
         deepnight_neg_vocab = self._vl.load(["deepnight_neg.txt"])
@@ -86,7 +89,8 @@ class BuildPage(ListDetailLayout):
         self._blacklist_editor.affixes_changed.connect(self._on_blacklist_changed)
         self._tabs.addTab(self._blacklist_editor, "黑名单")
 
-        rl.addWidget(self._tabs)
+        affix_layout.addWidget(self._tabs)
+        rl.addWidget(affix_card, 1)
 
     # ── 列表项 (带删除按钮) ──
 

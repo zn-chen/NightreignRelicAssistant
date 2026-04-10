@@ -38,10 +38,16 @@ class CommonPage(ListDetailLayout):
         # 右侧
         rl = self._right_layout
 
+        from nra.ui.widgets.helpers import make_card
+
+        name_card, name_layout = make_card("名称")
         self._name_edit = QLineEdit()
         self._name_edit.setPlaceholderText("组名称")
         self._name_edit.editingFinished.connect(self._on_name_changed)
-        rl.addWidget(self._name_edit)
+        name_layout.addWidget(self._name_edit)
+        rl.addWidget(name_card)
+
+        affix_card, affix_layout = make_card("词条配置")
 
         normal_vocab = self._vl.load(["normal.txt", "normal_special.txt"])
         deepnight_pos_vocab = self._vl.load(["deepnight_pos.txt"])
@@ -66,7 +72,8 @@ class CommonPage(ListDetailLayout):
         self._blacklist_editor.affixes_changed.connect(self._on_blacklist_changed)
         self._tabs.addTab(self._blacklist_editor, "黑名单")
 
-        rl.addWidget(self._tabs)
+        affix_layout.addWidget(self._tabs)
+        rl.addWidget(affix_card, 1)
 
     # ── 列表操作 ──
 
