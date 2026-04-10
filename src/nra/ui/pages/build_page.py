@@ -1,4 +1,4 @@
-"""角色 构筑 管理页面"""
+"""角色构筑管理页面"""
 
 from __future__ import annotations
 
@@ -6,7 +6,9 @@ import json
 from PySide6.QtWidgets import (
     QLineEdit, QGroupBox, QCheckBox, QSpinBox, QTabWidget,
     QInputDialog, QMessageBox, QFileDialog, QHBoxLayout,
+    QVBoxLayout, QPushButton, QListWidgetItem, QWidget,
 )
+from PySide6.QtCore import Qt, QSize
 
 from nra.models.preset_manager import PresetManager
 from nra.models.vocabulary import VocabularyLoader
@@ -26,11 +28,19 @@ class BuildPage(ListDetailLayout):
         self._refresh_list()
 
     def _setup(self):
-        # 左侧
-        self._left_layout.insertWidget(0, make_title("构筑列表"))
+        # 左侧标题行: 标题 + "+" 按钮
+        title_row = QHBoxLayout()
+        title_row.addWidget(make_title("构筑列表"))
+        title_row.addStretch()
+        add_btn = QPushButton("+")
+        add_btn.setFixedSize(28, 28)
+        add_btn.setStyleSheet("font-size: 18px; font-weight: bold;")
+        add_btn.clicked.connect(self._on_add)
+        title_row.addWidget(add_btn)
+        self._left_layout.insertLayout(0, title_row)
+
         self._list.currentRowChanged.connect(self._on_selection_changed)
         self._add_left_buttons(
-            [("新建", self._on_add), ("删除", self._on_delete)],
             [("导出", self._on_export_single), ("导入", self._on_import_single)],
             [("批量导出", self._on_export_all), ("批量导入", self._on_import_all)],
         )
@@ -58,7 +68,6 @@ class BuildPage(ListDetailLayout):
         self._common_group_box.setCheckable(True)
         self._common_group_box.setChecked(True)
         self._common_group_box.toggled.connect(self._on_include_common_toggled)
-        from PySide6.QtWidgets import QVBoxLayout
         self._common_group_layout = QVBoxLayout(self._common_group_box)
         self._common_group_layout.setSpacing(4)
         rl.addWidget(self._common_group_box)
@@ -89,6 +98,28 @@ class BuildPage(ListDetailLayout):
         rl.addWidget(self._tabs)
 
         self._populate_common_checkboxes()
+
+    # ── 列表项 (带删除按钮) ──
+
+    def _make_list_item_widget(self, name: str, build_id: str) -> QWidget:
+        """创建列表项: 名称 + 删除按钮"""
+        widget = QWidget()
+        layout = QHBoxLayout(widget)
+        layout.setContentsMargins(4, 2, 4, 2)
+        layout.setSpacing(4)
+
+        from PySide6.QtWidgets import QLabel
+        label = QLabel(name)
+        layout.addWidget(label, 1)
+
+        del_btn = QPushButton("🗑")
+        del_btn.setFixedSize(24, 24)
+        del_btn.setStyleSheet("border: none; font-size: 14px;")
+        del_btn.setToolTip("删除")
+        del_btn.clicked.connect(lambda _, bid=build_id: self._on_delete_by_id(bid))
+        layout.addWidget(del_btn)
+
+        return widget
 
     # ── Group Checkboxes ──
 
@@ -124,7 +155,11 @@ class BuildPage(ListDetailLayout):
         self._list.blockSignals(True)
         self._list.clear()
         for b in self._pm.builds:
-            self._list.addItem(b["name"])
+            item = QListWidgetItem()
+            widget = self._make_list_item_widget(b["name"], b["id"])
+            item.setSizeHint(widget.sizeHint())
+            self._list.addItem(item)
+            self._list.setItemWidget(item, widget)
         self._list.blockSignals(False)
 
     def _on_selection_changed(self, row: int):
@@ -157,18 +192,18 @@ class BuildPage(ListDetailLayout):
         self._refresh_list()
         self._list.setCurrentRow(self._list.count() - 1)
 
-    def _on_delete(self):
-        row = self._list.currentRow()
-        if row < 0:
+    def _on_delete_by_id(self, build_id: str):
+        build = self._pm.get_build(build_id)
+        if build is None:
             return
-        build = self._pm.builds[row]
         answer = QMessageBox.question(self, "确认删除",
             f"确定删除构筑 \"{build['name']}\" 吗？")
         if answer != QMessageBox.Yes:
             return
-        self._pm.delete_build(build["id"])
-        self._current_build_id = None
-        self._hide_right()
+        self._pm.delete_build(build_id)
+        if self._current_build_id == build_id:
+            self._current_build_id = None
+            self._hide_right()
         self._refresh_list()
 
     # ── 导入导出 ──
@@ -179,7 +214,7 @@ class BuildPage(ListDetailLayout):
     def _on_export_single(self):
         row = self._list.currentRow()
         if row < 0:
-            QMessageBox.information(self, "提示", "请先选择一个 构筑")
+            QMessageBox.information(self, "提示", "请先选择一个构筑")
             return
         build = self._pm.builds[row]
         path, _ = QFileDialog.getSaveFileName(self, "导出构筑",
@@ -203,7 +238,7 @@ class BuildPage(ListDetailLayout):
 
     def _on_export_all(self):
         if not self._pm.builds:
-            QMessageBox.information(self, "提示", "没有可导出的 构筑")
+            QMessageBox.information(self, "提示", "没有可导出的构筑")
             return
         path, _ = QFileDialog.getSaveFileName(self, "批量导出构筑",
             "builds.json", "JSON (*.json)")
@@ -237,9 +272,12 @@ class BuildPage(ListDetailLayout):
         if not new_name:
             return
         self._pm.update_build(self._current_build_id, name=new_name)
-        row = self._list.currentRow()
-        if row >= 0:
-            self._list.item(row).setText(new_name)
+        self._refresh_list()
+        # 重新选中当前 build
+        for i, b in enumerate(self._pm.builds):
+            if b["id"] == self._current_build_id:
+                self._list.setCurrentRow(i)
+                break
 
     def _on_min_matches_changed(self, value):
         if self._current_build_id:
