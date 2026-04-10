@@ -2,7 +2,7 @@
 
 from PySide6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QListWidget,
-    QPushButton, QScrollArea, QFrame, QSizePolicy,
+    QPushButton, QScrollArea, QFrame, QSizePolicy, QSpacerItem,
 )
 from PySide6.QtCore import Qt
 
@@ -12,6 +12,7 @@ class ListDetailLayout(QWidget):
     左右分栏布局模板:
     - 左侧: 标题 + 列表(撑满) + 按钮区, 固定宽度
     - 右侧: 可滚动详情面板, 撑满剩余宽度, 无选中时隐藏
+    - 右侧隐藏时, 左侧靠左对齐不居中
     """
 
     def __init__(self, parent=None):
@@ -21,7 +22,7 @@ class ListDetailLayout(QWidget):
     def _init_base_layout(self):
         root = QHBoxLayout(self)
         root.setContentsMargins(12, 12, 12, 12)
-        root.setSpacing(0)
+        root.setSpacing(12)
         self._root_layout = root
 
         # ── 左侧面板 ──
@@ -33,14 +34,10 @@ class ListDetailLayout(QWidget):
         self._left_layout.setContentsMargins(0, 0, 0, 0)
         self._left_layout.setSpacing(8)
 
-        # 列表 — stretch=1 让它吃掉左侧所有多余空间
         self._list = QListWidget()
         self._left_layout.addWidget(self._list, 1)
 
         root.addWidget(self._left_panel)
-
-        # ── 间距 ──
-        root.addSpacing(12)
 
         # ── 右侧面板 ──
         self._scroll = QScrollArea()
@@ -50,15 +47,18 @@ class ListDetailLayout(QWidget):
 
         self._right_panel = QWidget()
         self._right_layout = QVBoxLayout(self._right_panel)
-        self._right_layout.setContentsMargins(16, 0, 0, 0)
+        self._right_layout.setContentsMargins(4, 0, 0, 0)
         self._right_layout.setSpacing(10)
 
         self._scroll.setWidget(self._right_panel)
         self._scroll.setVisible(False)
-        root.addWidget(self._scroll, 1)  # stretch=1, 撑满剩余宽度
+        root.addWidget(self._scroll, 1)
+
+        # ── 右侧占位 spacer (右侧隐藏时撑满, 防止左侧居中) ──
+        self._placeholder = QSpacerItem(0, 0, QSizePolicy.Expanding, QSizePolicy.Minimum)
+        root.addSpacerItem(self._placeholder)
 
     def _add_left_buttons(self, *rows):
-        """添加按钮行到左侧面板底部, 每个 row 是 [(label, callback), ...]"""
         for row_items in rows:
             row = QHBoxLayout()
             row.setSpacing(6)
