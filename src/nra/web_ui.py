@@ -235,6 +235,9 @@ def create_app(data_dir: str = "data"):
 
 
 def main():
+    # 强制使用本地前端资源，不从 CDN 加载
+    os.environ["GRADIO_ANALYTICS_ENABLED"] = "False"
+
     data_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "data")
     data_dir = os.path.normpath(data_dir)
 
@@ -244,6 +247,7 @@ def main():
         server_port=7860,
         inbrowser=True,
         show_api=False,
+        share=False,
     )
 
 
