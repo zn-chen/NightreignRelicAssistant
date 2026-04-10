@@ -4,9 +4,8 @@ from __future__ import annotations
 
 import json
 from PySide6.QtWidgets import (
-    QLineEdit, QGroupBox, QCheckBox, QSpinBox, QTabWidget,
-    QInputDialog, QMessageBox, QFileDialog, QHBoxLayout,
-    QVBoxLayout, QPushButton, QListWidgetItem, QWidget,
+    QTabWidget, QInputDialog, QMessageBox, QFileDialog,
+    QHBoxLayout, QPushButton, QListWidgetItem, QWidget,
     QLabel, QDialog, QDialogButtonBox, QListWidget,
 )
 from PySide6.QtCore import Qt
@@ -64,30 +63,6 @@ class BuildPage(ListDetailLayout):
         # 右侧
         rl = self._right_layout
 
-        self._name_edit = QLineEdit()
-        self._name_edit.setPlaceholderText("构筑名称")
-        self._name_edit.editingFinished.connect(self._on_name_changed)
-        rl.addWidget(self._name_edit)
-
-        min_row = QHBoxLayout()
-        min_row.addWidget(make_title("最少命中词条数"))
-        self._min_spin = QSpinBox()
-        self._min_spin.setRange(1, 6)
-        self._min_spin.setValue(2)
-        self._min_spin.setFixedWidth(60)
-        self._min_spin.valueChanged.connect(self._on_min_matches_changed)
-        min_row.addWidget(self._min_spin)
-        min_row.addStretch()
-        rl.addLayout(min_row)
-
-        self._common_group_box = QGroupBox("引用通用词条组")
-        self._common_group_box.setCheckable(True)
-        self._common_group_box.setChecked(True)
-        self._common_group_box.toggled.connect(self._on_include_common_toggled)
-        self._common_group_layout = QVBoxLayout(self._common_group_box)
-        self._common_group_layout.setSpacing(4)
-        rl.addWidget(self._common_group_box)
-
         normal_vocab = self._vl.load(["normal.txt", "normal_special.txt"])
         deepnight_pos_vocab = self._vl.load(["deepnight_pos.txt"])
         deepnight_neg_vocab = self._vl.load(["deepnight_neg.txt"])
@@ -113,8 +88,6 @@ class BuildPage(ListDetailLayout):
 
         rl.addWidget(self._tabs)
 
-        self._populate_common_checkboxes()
-
     # ── 列表项 (带删除按钮) ──
 
     def _make_list_item_widget(self, name: str, build_id: str) -> QWidget:
@@ -135,33 +108,8 @@ class BuildPage(ListDetailLayout):
 
         return widget
 
-    # ── Group Checkboxes ──
-
-    def _populate_common_checkboxes(self):
-        while self._common_group_layout.count():
-            item = self._common_group_layout.takeAt(0)
-            if item.widget():
-                item.widget().deleteLater()
-        self._common_cbs: list[tuple[str, QCheckBox]] = []
-        for group in self._pm.common_groups:
-            cb = QCheckBox(group["name"])
-            cb.stateChanged.connect(self._on_common_ids_changed)
-            self._common_group_layout.addWidget(cb)
-            self._common_cbs.append((group["id"], cb))
-
-    def _sync_common_checkboxes(self, build: dict):
-        checked_ids = set(build.get("common_group_ids", []))
-        for gid, cb in self._common_cbs:
-            cb.blockSignals(True)
-            cb.setChecked(gid in checked_ids)
-            cb.blockSignals(False)
-
     def refresh_group_refs(self):
-        self._populate_common_checkboxes()
-        if self._current_build_id is not None:
-            build = self._pm.get_build(self._current_build_id)
-            if build is not None:
-                self._sync_common_checkboxes(build)
+        pass
 
     # ── 列表操作 ──
 
@@ -185,14 +133,6 @@ class BuildPage(ListDetailLayout):
         self._current_build_id = build["id"]
         self._show_right()
 
-        self._name_edit.setText(build["name"])
-        self._min_spin.blockSignals(True)
-        self._min_spin.setValue(build.get("min_matches", 2))
-        self._min_spin.blockSignals(False)
-        self._common_group_box.blockSignals(True)
-        self._common_group_box.setChecked(build.get("include_common", True))
-        self._common_group_box.blockSignals(False)
-        self._sync_common_checkboxes(build)
         self._normal_editor.set_affixes(build.get("normal_whitelist", []))
         self._deepnight_editor.set_affixes(build.get("deepnight_whitelist", []))
         self._deepnight_neg_editor.set_affixes(build.get("deepnight_neg_whitelist", []))
@@ -288,32 +228,6 @@ class BuildPage(ListDetailLayout):
         self._list.setCurrentRow(self._list.count() - 1)
 
     # ── 自动保存 ──
-
-    def _on_name_changed(self):
-        if self._current_build_id is None:
-            return
-        new_name = self._name_edit.text().strip()
-        if not new_name:
-            return
-        self._pm.update_build(self._current_build_id, name=new_name)
-        self._refresh_list()
-        for i, b in enumerate(self._pm.builds):
-            if b["id"] == self._current_build_id:
-                self._list.setCurrentRow(i)
-                break
-
-    def _on_min_matches_changed(self, value):
-        if self._current_build_id:
-            self._pm.update_build(self._current_build_id, min_matches=value)
-
-    def _on_include_common_toggled(self, checked):
-        if self._current_build_id:
-            self._pm.update_build(self._current_build_id, include_common=checked)
-
-    def _on_common_ids_changed(self):
-        if self._current_build_id:
-            ids = [gid for gid, cb in self._common_cbs if cb.isChecked()]
-            self._pm.update_build(self._current_build_id, common_group_ids=ids)
 
     def _on_normal_changed(self, affixes):
         if self._current_build_id:
