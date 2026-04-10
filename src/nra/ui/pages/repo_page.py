@@ -3,9 +3,10 @@
 from PySide6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout,
     QComboBox, QSpinBox, QCheckBox, QPushButton,
-    QGroupBox, QTextEdit, QLabel,
+    QTextEdit, QLabel,
 )
 from PySide6.QtCore import Qt
+from nra.ui.widgets.helpers import make_title
 
 
 class RepoPage(QWidget):
@@ -15,60 +16,56 @@ class RepoPage(QWidget):
 
     def _init_ui(self):
         layout = QHBoxLayout(self)
-        layout.setContentsMargins(12, 12, 12, 12)
+        layout.setContentsMargins(12, 20, 12, 12)
         layout.setSpacing(16)
 
         # 左侧: 配置区
         config_panel = QVBoxLayout()
-        config_panel.setSpacing(12)
+        config_panel.setSpacing(8)
 
         # 模式
-        mode_group = QGroupBox("模式")
-        mode_layout = QVBoxLayout(mode_group)
-        mode_layout.setSpacing(8)
+        config_panel.addWidget(make_title("模式"))
 
         mode_row = QHBoxLayout()
         mode_row.addWidget(QLabel("遗物类型:"))
         self._mode_combo = QComboBox()
         self._mode_combo.addItems(["普通", "深夜"])
         mode_row.addWidget(self._mode_combo)
-        mode_layout.addLayout(mode_row)
+        config_panel.addLayout(mode_row)
 
         clean_row = QHBoxLayout()
         clean_row.addWidget(QLabel("清理模式:"))
         self._clean_mode_combo = QComboBox()
         self._clean_mode_combo.addItems(["售出", "收藏"])
         clean_row.addWidget(self._clean_mode_combo)
-        mode_layout.addLayout(clean_row)
-        config_panel.addWidget(mode_group)
+        config_panel.addLayout(clean_row)
 
-        # 匹配
-        match_group = QGroupBox("匹配设置")
-        match_layout = QVBoxLayout(match_group)
-        match_layout.setSpacing(8)
+        config_panel.addSpacing(8)
+
+        # 匹配设置
+        config_panel.addWidget(make_title("匹配设置"))
 
         match_row = QHBoxLayout()
         match_row.addWidget(QLabel("匹配模式:"))
         self._match_combo = QComboBox()
         self._match_combo.addItems(["双有效", "三有效"])
         match_row.addWidget(self._match_combo)
-        match_layout.addLayout(match_row)
+        config_panel.addLayout(match_row)
 
         build_row = QHBoxLayout()
         build_row.addWidget(QLabel("使用 Build:"))
         self._build_combo = QComboBox()
         build_row.addWidget(self._build_combo)
-        match_layout.addLayout(build_row)
-        config_panel.addWidget(match_group)
+        config_panel.addLayout(build_row)
 
-        # 数量
-        count_group = QGroupBox("数量设置")
-        count_layout = QVBoxLayout(count_group)
-        count_layout.setSpacing(8)
+        config_panel.addSpacing(8)
+
+        # 数量设置
+        config_panel.addWidget(make_title("数量设置"))
 
         self._auto_detect_cb = QCheckBox("自动检测遗物数量")
         self._auto_detect_cb.setChecked(True)
-        count_layout.addWidget(self._auto_detect_cb)
+        config_panel.addWidget(self._auto_detect_cb)
 
         max_row = QHBoxLayout()
         max_row.addWidget(QLabel("最大检测数量:"))
@@ -76,11 +73,12 @@ class RepoPage(QWidget):
         self._max_count.setRange(0, 999)
         self._max_count.setValue(0)
         max_row.addWidget(self._max_count)
-        count_layout.addLayout(max_row)
+        config_panel.addLayout(max_row)
 
         self._allow_favorited_cb = QCheckBox("允许操作已收藏遗物")
-        count_layout.addWidget(self._allow_favorited_cb)
-        config_panel.addWidget(count_group)
+        config_panel.addWidget(self._allow_favorited_cb)
+
+        config_panel.addSpacing(8)
 
         # 按钮
         btn_layout = QHBoxLayout()
@@ -99,11 +97,12 @@ class RepoPage(QWidget):
 
         # 右侧
         right_panel = QVBoxLayout()
-        right_panel.setSpacing(12)
+        right_panel.setSpacing(8)
 
         # 统计
-        stats_group = QGroupBox("统计")
-        stats_layout = QHBoxLayout(stats_group)
+        right_panel.addWidget(make_title("统计"))
+
+        stats_layout = QHBoxLayout()
         stats_layout.setSpacing(16)
         self._stat_labels = {}
         for name in ["检测", "合格", "不合格", "跳过", "售出", "收藏"]:
@@ -119,14 +118,14 @@ class RepoPage(QWidget):
             stat.addWidget(name_label)
             stats_layout.addLayout(stat)
             self._stat_labels[name] = count_label
-        right_panel.addWidget(stats_group)
+        right_panel.addLayout(stats_layout)
+
+        right_panel.addSpacing(8)
 
         # 日志
-        log_group = QGroupBox("日志")
-        log_layout = QVBoxLayout(log_group)
+        right_panel.addWidget(make_title("日志"))
         self._log_text = QTextEdit()
         self._log_text.setReadOnly(True)
-        log_layout.addWidget(self._log_text)
-        right_panel.addWidget(log_group, 1)
+        right_panel.addWidget(self._log_text, 1)
 
         layout.addLayout(right_panel, 2)
