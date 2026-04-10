@@ -96,7 +96,7 @@ class RepoPage(QWidget):
         for name in ["检测", "合格", "不合格", "跳过", "售出", "收藏"]:
             stat = QVBoxLayout()
             count_label = QLabel("0")
-            count_label.setStyleSheet("font-size: 18pt; font-weight: bold; color: #89b4fa;")
+            count_label.setStyleSheet("font-size: 18pt; font-weight: bold;")
             stat.addWidget(count_label)
             stat.addWidget(QLabel(name))
             stats_layout.addLayout(stat)
