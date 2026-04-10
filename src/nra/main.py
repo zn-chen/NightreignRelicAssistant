@@ -1,6 +1,7 @@
 """程序入口"""
 
 import sys
+import os
 
 
 def main():
@@ -8,7 +9,11 @@ def main():
     from nra.ui.main_window import MainWindow
 
     app = QApplication(sys.argv)
-    window = MainWindow()
+
+    data_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "data")
+    data_dir = os.path.normpath(data_dir)
+
+    window = MainWindow(data_dir=data_dir)
     window.show()
     sys.exit(app.exec())
 
