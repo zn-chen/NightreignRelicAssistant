@@ -6,7 +6,6 @@ from PySide6.QtWidgets import (
     QGroupBox, QTextEdit, QLabel,
 )
 from PySide6.QtCore import Qt
-from nra.ui.widgets.helpers import make_title
 
 
 class RepoPage(QWidget):
@@ -100,7 +99,7 @@ class RepoPage(QWidget):
 
         # 右侧
         right_panel = QVBoxLayout()
-        right_panel.setSpacing(10)
+        right_panel.setSpacing(12)
 
         # 统计
         stats_group = QGroupBox("统计")
@@ -123,9 +122,11 @@ class RepoPage(QWidget):
         right_panel.addWidget(stats_group)
 
         # 日志
-        right_panel.addWidget(make_title("日志"))
+        log_group = QGroupBox("日志")
+        log_layout = QVBoxLayout(log_group)
         self._log_text = QTextEdit()
         self._log_text.setReadOnly(True)
-        right_panel.addWidget(self._log_text)
+        log_layout.addWidget(self._log_text)
+        right_panel.addWidget(log_group, 1)
 
         layout.addLayout(right_panel, 2)
