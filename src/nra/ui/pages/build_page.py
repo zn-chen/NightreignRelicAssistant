@@ -142,8 +142,8 @@ class BuildPage(QWidget):
         self._scroll.setVisible(False)
         splitter.addWidget(self._scroll)
         splitter.setSizes([220, 580])
-        splitter.setStretchFactor(0, 1)
-        splitter.setStretchFactor(1, 3)
+        splitter.setStretchFactor(0, 0)  # 左侧不随窗口拉伸
+        splitter.setStretchFactor(1, 1)  # 右侧吃掉所有多余空间
 
         self._populate_common_checkboxes()
 

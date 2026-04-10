@@ -116,8 +116,8 @@ class CommonPage(QWidget):
         self._right.setVisible(False)
         splitter.addWidget(self._right)
         splitter.setSizes([220, 580])
-        splitter.setStretchFactor(0, 1)
-        splitter.setStretchFactor(1, 3)
+        splitter.setStretchFactor(0, 0)
+        splitter.setStretchFactor(1, 1)
 
     # ── 列表操作 ──
 
