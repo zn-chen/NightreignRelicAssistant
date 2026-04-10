@@ -29,7 +29,6 @@ automation = [
     "pygetwindow>=0.0.9",
 ]
 dev = [
-    "pytest>=7.0",
     "pyinstaller>=6.0",
 ]
 
@@ -38,7 +37,3 @@ nra = "nra.main:main"
 
 [tool.setuptools.packages.find]
 where = ["src"]
-
-[tool.pytest.ini_options]
-testpaths = ["tests"]
-pythonpath = ["src"]

@@ -22,12 +22,6 @@ env/
 .DS_Store
 Thumbs.db
 
-# Test / Coverage
-.pytest_cache/
-.coverage
-htmlcov/
-.tox/
-
 # Distribution
 *.spec
 
