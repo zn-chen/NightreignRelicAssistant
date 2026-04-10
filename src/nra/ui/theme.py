@@ -1,11 +1,11 @@
-"""主题 — 强制浅色，不跟随系统"""
+"""主题"""
 
 from qfluentwidgets import setTheme, setThemeColor, Theme
 from PySide6.QtGui import QColor
 
 
 def apply_theme():
-    # 强制浅色主题，不受 macOS 暗色模式影响
-    setTheme(Theme.LIGHT)
-    # 主题强调色
+    # 跟随系统主题 (macOS 暗色 → 暗色, Windows 亮色 → 亮色)
+    setTheme(Theme.AUTO)
+    # 蓝色强调色
     setThemeColor(QColor(0, 120, 212))
