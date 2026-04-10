@@ -39,12 +39,8 @@ class ListDetailLayout(QWidget):
 
         root.addWidget(self._left_panel)
 
-        # ── 分隔线 ──
-        self._separator = QFrame()
-        self._separator.setFrameShape(QFrame.VLine)
-        self._separator.setFrameShadow(QFrame.Sunken)
-        self._separator.setVisible(False)
-        root.addWidget(self._separator)
+        # ── 间距 ──
+        root.addSpacing(12)
 
         # ── 右侧面板 ──
         self._scroll = QScrollArea()
@@ -74,8 +70,6 @@ class ListDetailLayout(QWidget):
 
     def _show_right(self):
         self._scroll.setVisible(True)
-        self._separator.setVisible(True)
 
     def _hide_right(self):
         self._scroll.setVisible(False)
-        self._separator.setVisible(False)
