@@ -20,25 +20,33 @@ class AffixEditor(QWidget):
 
     def _init_ui(self):
         layout = QVBoxLayout(self)
-        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setContentsMargins(8, 8, 8, 8)
+        layout.setSpacing(6)
 
         # 搜索框
         self._search_input = QLineEdit()
-        self._search_input.setPlaceholderText("搜索词条...")
+        self._search_input.setPlaceholderText("输入关键字搜索词条...")
+        self._search_input.setClearButtonEnabled(True)
         self._search_input.textChanged.connect(self._on_search)
         layout.addWidget(self._search_input)
 
         # 搜索结果
-        layout.addWidget(QLabel("词条库:"))
+        header = QLabel("词条库")
+        header.setStyleSheet("font-weight: bold; color: gray;")
+        layout.addWidget(header)
         self._result_list = QListWidget()
-        self._result_list.setMaximumHeight(200)
+        self._result_list.setMaximumHeight(180)
         self._result_list.itemDoubleClicked.connect(self._on_add_item)
         layout.addWidget(self._result_list)
 
         # 已选词条
         selected_header = QHBoxLayout()
-        selected_header.addWidget(QLabel("已选词条:"))
+        selected_label = QLabel("已选词条")
+        selected_label.setStyleSheet("font-weight: bold; color: gray;")
+        selected_header.addWidget(selected_label)
+        selected_header.addStretch()
         remove_btn = QPushButton("删除选中")
+        remove_btn.setFixedWidth(80)
         remove_btn.clicked.connect(self._on_remove)
         selected_header.addWidget(remove_btn)
         layout.addLayout(selected_header)
@@ -79,7 +87,6 @@ class AffixEditor(QWidget):
         self.affixes_changed.emit(list(self._selected))
 
     def set_affixes(self, affixes: list[str]):
-        """外部设置已选词条（加载数据时用）"""
         self._selected = list(affixes)
         self._selected_list.clear()
         for a in self._selected:

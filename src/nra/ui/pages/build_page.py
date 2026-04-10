@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from PySide6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QSplitter,
-    QLabel, QListWidget, QPushButton, QLineEdit,
+    QListWidget, QPushButton, QLineEdit,
     QGroupBox, QCheckBox, QSpinBox, QTabWidget,
     QScrollArea, QInputDialog, QMessageBox,
 )
@@ -13,17 +13,12 @@ from PySide6.QtCore import Qt
 from nra.models.preset_manager import PresetManager
 from nra.models.vocabulary import VocabularyLoader
 from nra.ui.widgets.affix_editor import AffixEditor
+from nra.ui.widgets.helpers import make_title
 
 
 class BuildPage(QWidget):
-    """角色 Build 管理：左侧列表 + 右侧编辑面板。"""
 
-    def __init__(
-        self,
-        preset_manager: PresetManager,
-        vocab_loader: VocabularyLoader,
-        parent=None,
-    ):
+    def __init__(self, preset_manager: PresetManager, vocab_loader: VocabularyLoader, parent=None):
         super().__init__(parent)
         self._pm = preset_manager
         self._vl = vocab_loader
@@ -31,23 +26,25 @@ class BuildPage(QWidget):
         self._init_ui()
         self._refresh_list()
 
-    # ── UI 初始化 ────────────────────────────────────────────────
-
     def _init_ui(self):
         splitter = QSplitter(Qt.Horizontal, self)
         root = QHBoxLayout(self)
+        root.setContentsMargins(12, 12, 12, 12)
         root.addWidget(splitter)
 
-        # ── 左侧面板 ─────────────────────────────────────────
+        # 左侧
         left = QWidget()
         left_layout = QVBoxLayout(left)
-        left_layout.addWidget(QLabel("角色 Build"))
+        left_layout.setContentsMargins(0, 0, 8, 0)
+        left_layout.setSpacing(8)
+        left_layout.addWidget(make_title("角色 Build"))
 
         self._list = QListWidget()
         self._list.currentRowChanged.connect(self._on_selection_changed)
         left_layout.addWidget(self._list)
 
         btn_row = QHBoxLayout()
+        btn_row.setSpacing(6)
         add_btn = QPushButton("新建")
         add_btn.clicked.connect(self._on_add)
         del_btn = QPushButton("删除")
@@ -58,49 +55,55 @@ class BuildPage(QWidget):
 
         splitter.addWidget(left)
 
-        # ── 右侧面板 (QScrollArea) ──────────────────────────
+        # 右侧 (scrollable)
         scroll = QScrollArea()
         scroll.setWidgetResizable(True)
 
         self._right = QWidget()
         right_layout = QVBoxLayout(self._right)
+        right_layout.setContentsMargins(8, 0, 0, 0)
+        right_layout.setSpacing(12)
 
-        # Build 名称
+        right_layout.addWidget(make_title("Build 编辑"))
+
+        # 名称
         self._name_edit = QLineEdit()
         self._name_edit.setPlaceholderText("Build 名称")
         self._name_edit.editingFinished.connect(self._on_name_changed)
         right_layout.addWidget(self._name_edit)
 
-        # 最少命中词条数
+        # 匹配数
         min_row = QHBoxLayout()
-        min_row.addWidget(QLabel("最少命中词条数:"))
+        min_row.addWidget(make_title("最少命中词条数"))
         self._min_spin = QSpinBox()
         self._min_spin.setRange(1, 6)
         self._min_spin.setValue(2)
+        self._min_spin.setFixedWidth(60)
         self._min_spin.valueChanged.connect(self._on_min_matches_changed)
         min_row.addWidget(self._min_spin)
         min_row.addStretch()
         right_layout.addLayout(min_row)
 
-        # 引用通用词条组
+        # 通用组引用
         self._common_group_box = QGroupBox("引用通用词条组")
         self._common_group_box.setCheckable(True)
         self._common_group_box.setChecked(True)
         self._common_group_box.toggled.connect(self._on_include_common_toggled)
         self._common_group_layout = QVBoxLayout(self._common_group_box)
+        self._common_group_layout.setSpacing(4)
         right_layout.addWidget(self._common_group_box)
 
-        # 引用黑名单组
+        # 黑名单引用
         self._blacklist_group_box = QGroupBox("引用黑名单组")
         self._blacklist_group_layout = QVBoxLayout(self._blacklist_group_box)
+        self._blacklist_group_layout.setSpacing(4)
         right_layout.addWidget(self._blacklist_group_box)
 
-        # 白名单编辑 Tabs
+        # 白名单
         normal_vocab = self._vl.load(["normal.txt", "normal_special.txt"])
         deepnight_vocab = self._vl.load(["deepnight_pos.txt"])
 
         self._tabs = QTabWidget()
-
         self._normal_editor = AffixEditor(normal_vocab)
         self._normal_editor.affixes_changed.connect(self._on_normal_changed)
         self._tabs.addTab(self._normal_editor, "普通白名单")
@@ -114,23 +117,21 @@ class BuildPage(QWidget):
         self._right.setEnabled(False)
         scroll.setWidget(self._right)
         splitter.addWidget(scroll)
+        splitter.setSizes([220, 580])
 
         splitter.setStretchFactor(0, 1)
         splitter.setStretchFactor(1, 3)
 
-        # 初始化 group checkboxes
         self._populate_common_checkboxes()
         self._populate_blacklist_checkboxes()
 
-    # ── Group Checkboxes ────────────────────────────────────────
+    # ── Group Checkboxes ──
 
     def _populate_common_checkboxes(self):
-        # Clear existing checkboxes
         while self._common_group_layout.count():
             item = self._common_group_layout.takeAt(0)
             if item.widget():
                 item.widget().deleteLater()
-
         self._common_cbs: list[tuple[str, QCheckBox]] = []
         for group in self._pm.common_groups:
             cb = QCheckBox(group["name"])
@@ -143,7 +144,6 @@ class BuildPage(QWidget):
             item = self._blacklist_group_layout.takeAt(0)
             if item.widget():
                 item.widget().deleteLater()
-
         self._blacklist_cbs: list[tuple[str, QCheckBox]] = []
         for group in self._pm.blacklist_groups:
             cb = QCheckBox(group["name"])
@@ -152,7 +152,6 @@ class BuildPage(QWidget):
             self._blacklist_cbs.append((group["id"], cb))
 
     def _sync_common_checkboxes(self, build: dict):
-        """Sync checkbox state to match build's common_group_ids."""
         checked_ids = set(build.get("common_group_ids", []))
         for gid, cb in self._common_cbs:
             cb.blockSignals(True)
@@ -160,7 +159,6 @@ class BuildPage(QWidget):
             cb.blockSignals(False)
 
     def _sync_blacklist_checkboxes(self, build: dict):
-        """Sync checkbox state to match build's blacklist_group_ids."""
         checked_ids = set(build.get("blacklist_group_ids", []))
         for gid, cb in self._blacklist_cbs:
             cb.blockSignals(True)
@@ -168,17 +166,15 @@ class BuildPage(QWidget):
             cb.blockSignals(False)
 
     def refresh_group_refs(self):
-        """Refresh group checkboxes when common/blacklist groups change externally."""
         self._populate_common_checkboxes()
         self._populate_blacklist_checkboxes()
-        # Re-sync checked state if a build is selected
         if self._current_build_id is not None:
             build = self._pm.get_build(self._current_build_id)
             if build is not None:
                 self._sync_common_checkboxes(build)
                 self._sync_blacklist_checkboxes(build)
 
-    # ── 列表操作 ─────────────────────────────────────────────────
+    # ── 列表操作 ──
 
     def _refresh_list(self):
         self._list.blockSignals(True)
@@ -197,18 +193,14 @@ class BuildPage(QWidget):
         self._right.setEnabled(True)
 
         self._name_edit.setText(build["name"])
-
         self._min_spin.blockSignals(True)
         self._min_spin.setValue(build.get("min_matches", 2))
         self._min_spin.blockSignals(False)
-
         self._common_group_box.blockSignals(True)
         self._common_group_box.setChecked(build.get("include_common", True))
         self._common_group_box.blockSignals(False)
-
         self._sync_common_checkboxes(build)
         self._sync_blacklist_checkboxes(build)
-
         self._normal_editor.set_affixes(build.get("normal_whitelist", []))
         self._deepnight_editor.set_affixes(build.get("deepnight_whitelist", []))
 
@@ -225,12 +217,8 @@ class BuildPage(QWidget):
         if row < 0:
             return
         build = self._pm.builds[row]
-        answer = QMessageBox.question(
-            self,
-            "确认删除",
-            f"确定删除 Build \"{build['name']}\" 吗？",
-            QMessageBox.Yes | QMessageBox.No,
-        )
+        answer = QMessageBox.question(self, "确认删除",
+            f"确定删除 Build \"{build['name']}\" 吗？")
         if answer != QMessageBox.Yes:
             return
         self._pm.delete_build(build["id"])
@@ -238,7 +226,7 @@ class BuildPage(QWidget):
         self._right.setEnabled(False)
         self._refresh_list()
 
-    # ── 自动保存 ─────────────────────────────────────────────────
+    # ── 自动保存 ──
 
     def _on_name_changed(self):
         if self._current_build_id is None:
@@ -252,33 +240,27 @@ class BuildPage(QWidget):
             self._list.item(row).setText(new_name)
 
     def _on_min_matches_changed(self, value: int):
-        if self._current_build_id is None:
-            return
-        self._pm.update_build(self._current_build_id, min_matches=value)
+        if self._current_build_id:
+            self._pm.update_build(self._current_build_id, min_matches=value)
 
     def _on_include_common_toggled(self, checked: bool):
-        if self._current_build_id is None:
-            return
-        self._pm.update_build(self._current_build_id, include_common=checked)
+        if self._current_build_id:
+            self._pm.update_build(self._current_build_id, include_common=checked)
 
     def _on_common_ids_changed(self):
-        if self._current_build_id is None:
-            return
-        ids = [gid for gid, cb in self._common_cbs if cb.isChecked()]
-        self._pm.update_build(self._current_build_id, common_group_ids=ids)
+        if self._current_build_id:
+            ids = [gid for gid, cb in self._common_cbs if cb.isChecked()]
+            self._pm.update_build(self._current_build_id, common_group_ids=ids)
 
     def _on_blacklist_ids_changed(self):
-        if self._current_build_id is None:
-            return
-        ids = [gid for gid, cb in self._blacklist_cbs if cb.isChecked()]
-        self._pm.update_build(self._current_build_id, blacklist_group_ids=ids)
+        if self._current_build_id:
+            ids = [gid for gid, cb in self._blacklist_cbs if cb.isChecked()]
+            self._pm.update_build(self._current_build_id, blacklist_group_ids=ids)
 
-    def _on_normal_changed(self, affixes: list[str]):
-        if self._current_build_id is None:
-            return
-        self._pm.update_build(self._current_build_id, normal_whitelist=affixes)
+    def _on_normal_changed(self, affixes):
+        if self._current_build_id:
+            self._pm.update_build(self._current_build_id, normal_whitelist=affixes)
 
-    def _on_deepnight_changed(self, affixes: list[str]):
-        if self._current_build_id is None:
-            return
-        self._pm.update_build(self._current_build_id, deepnight_whitelist=affixes)
+    def _on_deepnight_changed(self, affixes):
+        if self._current_build_id:
+            self._pm.update_build(self._current_build_id, deepnight_whitelist=affixes)

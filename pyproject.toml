@@ -1,12 +1,12 @@
 [build-system]
 requires = ["setuptools>=68.0", "wheel"]
-build-backend = "setuptools.backends._legacy:_Backend"
+build-backend = "setuptools.build_meta"
 
 [project]
 name = "nightreign-relic-assistant"
 version = "0.1.0"
 description = "黑夜君临遗物助手 - Elden Ring Nightreign 遗物自动化管理工具"
-requires-python = ">=3.10"
+requires-python = ">=3.9"
 license = {text = "MIT"}
 
 dependencies = [
