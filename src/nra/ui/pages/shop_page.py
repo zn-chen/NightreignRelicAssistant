@@ -1,8 +1,8 @@
-"""刷石页面"""
+"""自动购买页面"""
 
 from PySide6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout,
-    QComboBox, QSpinBox, QCheckBox, QPushButton,
+    QComboBox, QSpinBox, QPushButton,
     QGroupBox, QTextEdit, QLabel,
 )
 from PySide6.QtCore import Qt
@@ -16,34 +16,14 @@ class ShopPage(QWidget):
 
     def _init_ui(self):
         layout = QHBoxLayout(self)
-        layout.setContentsMargins(12, 12, 12, 12)
+        layout.setContentsMargins(12, 20, 12, 12)
         layout.setSpacing(16)
 
         # 左侧: 配置区
         config_panel = QVBoxLayout()
         config_panel.setSpacing(12)
 
-        # 模式
-        mode_group = QGroupBox("模式")
-        mode_layout = QVBoxLayout(mode_group)
-        mode_layout.setSpacing(8)
-
-        mode_row = QHBoxLayout()
-        mode_row.addWidget(QLabel("遗物类型:"))
-        self._mode_combo = QComboBox()
-        self._mode_combo.addItems(["普通", "深夜"])
-        mode_row.addWidget(self._mode_combo)
-        mode_layout.addLayout(mode_row)
-
-        ver_row = QHBoxLayout()
-        ver_row.addWidget(QLabel("遗物版本:"))
-        self._version_combo = QComboBox()
-        self._version_combo.addItems(["新版", "旧版"])
-        ver_row.addWidget(self._version_combo)
-        mode_layout.addLayout(ver_row)
-        config_panel.addWidget(mode_group)
-
-        # 匹配
+        # 匹配设置
         match_group = QGroupBox("匹配设置")
         match_layout = QVBoxLayout(match_group)
         match_layout.setSpacing(8)
@@ -54,12 +34,6 @@ class ShopPage(QWidget):
         self._match_combo.addItems(["双有效", "三有效"])
         match_row.addWidget(self._match_combo)
         match_layout.addLayout(match_row)
-
-        build_row = QHBoxLayout()
-        build_row.addWidget(QLabel("使用 Build:"))
-        self._build_combo = QComboBox()
-        build_row.addWidget(self._build_combo)
-        match_layout.addLayout(build_row)
         config_panel.addWidget(match_group)
 
         # 停止条件
@@ -75,23 +49,12 @@ class ShopPage(QWidget):
         self._currency_threshold.setSingleStep(1000)
         currency_row.addWidget(self._currency_threshold)
         stop_layout.addLayout(currency_row)
-
-        self._sl_mode_cb = QCheckBox("启用 SL 模式（存档恢复）")
-        stop_layout.addWidget(self._sl_mode_cb)
-
-        sl_row = QHBoxLayout()
-        sl_row.addWidget(QLabel("目标合格数:"))
-        self._sl_target = QSpinBox()
-        self._sl_target.setRange(0, 999)
-        self._sl_target.setValue(0)
-        sl_row.addWidget(self._sl_target)
-        stop_layout.addLayout(sl_row)
         config_panel.addWidget(stop_group)
 
         # 按钮
         btn_layout = QHBoxLayout()
         btn_layout.setSpacing(8)
-        self._start_btn = QPushButton("开始筛选")
+        self._start_btn = QPushButton("开始")
         self._start_btn.setMinimumHeight(36)
         self._stop_btn = QPushButton("停止")
         self._stop_btn.setMinimumHeight(36)
