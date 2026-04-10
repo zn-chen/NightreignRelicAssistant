@@ -6,7 +6,6 @@ from nra.models.vocabulary import VocabularyLoader
 from nra.ui.pages.shop_page import ShopPage
 from nra.ui.pages.repo_page import RepoPage
 from nra.ui.pages.build_page import BuildPage
-from nra.ui.pages.common_page import CommonPage
 from nra.ui.pages.settings_page import SettingsPage
 
 
@@ -30,9 +29,6 @@ class MainWindow(QMainWindow):
 
         self._build_page = BuildPage(self._preset_manager, self._vocab_loader)
         tabs.addTab(self._build_page, "构筑管理")
-
-        self._common_page = CommonPage(self._preset_manager, self._vocab_loader)
-        tabs.addTab(self._common_page, "通用管理")
 
         self._settings_page = SettingsPage(f"{data_dir}/settings.json")
         tabs.addTab(self._settings_page, "设置")
