@@ -2,8 +2,7 @@
 
 from PySide6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout,
-    QComboBox, QSpinBox, QCheckBox, QPushButton,
-    QTextEdit, QLabel,
+    QSpinBox, QPushButton, QTextEdit, QLabel,
 )
 from PySide6.QtCore import Qt
 from nra.ui.widgets.helpers import make_card
@@ -23,55 +22,26 @@ class RepoPage(QWidget):
         config_panel = QVBoxLayout()
         config_panel.setSpacing(12)
 
-        # 模式
-        mode_card, mode_layout = make_card("模式")
-        mode_row = QHBoxLayout()
-        mode_row.addWidget(QLabel("遗物类型:"))
-        self._mode_combo = QComboBox()
-        self._mode_combo.addItems(["普通", "深夜"])
-        mode_row.addWidget(self._mode_combo)
-        mode_layout.addLayout(mode_row)
-
-        clean_row = QHBoxLayout()
-        clean_row.addWidget(QLabel("清理模式:"))
-        self._clean_mode_combo = QComboBox()
-        self._clean_mode_combo.addItems(["售出", "收藏"])
-        clean_row.addWidget(self._clean_mode_combo)
-        mode_layout.addLayout(clean_row)
-        config_panel.addWidget(mode_card)
-
         # 匹配设置
         match_card, match_layout = make_card("匹配设置")
         match_row = QHBoxLayout()
         match_row.addWidget(QLabel("匹配模式:"))
+        from PySide6.QtWidgets import QComboBox
         self._match_combo = QComboBox()
         self._match_combo.addItems(["双有效", "三有效"])
         match_row.addWidget(self._match_combo)
         match_layout.addLayout(match_row)
-
-        build_row = QHBoxLayout()
-        build_row.addWidget(QLabel("使用 Build:"))
-        self._build_combo = QComboBox()
-        build_row.addWidget(self._build_combo)
-        match_layout.addLayout(build_row)
         config_panel.addWidget(match_card)
 
         # 数量设置
         count_card, count_layout = make_card("数量设置")
-        self._auto_detect_cb = QCheckBox("自动检测遗物数量")
-        self._auto_detect_cb.setChecked(True)
-        count_layout.addWidget(self._auto_detect_cb)
-
         max_row = QHBoxLayout()
-        max_row.addWidget(QLabel("最大检测数量:"))
+        max_row.addWidget(QLabel("最大检测数:"))
         self._max_count = QSpinBox()
-        self._max_count.setRange(0, 999)
-        self._max_count.setValue(0)
+        self._max_count.setRange(1, 999)
+        self._max_count.setValue(100)
         max_row.addWidget(self._max_count)
         count_layout.addLayout(max_row)
-
-        self._allow_favorited_cb = QCheckBox("允许操作已收藏遗物")
-        count_layout.addWidget(self._allow_favorited_cb)
         config_panel.addWidget(count_card)
 
         # 按钮
@@ -98,7 +68,7 @@ class RepoPage(QWidget):
         stats_layout = QHBoxLayout()
         stats_layout.setSpacing(16)
         self._stat_labels = {}
-        for name in ["检测", "合格", "不合格", "跳过", "售出", "收藏"]:
+        for name in ["检测", "合格", "不合格", "售出"]:
             stat = QVBoxLayout()
             stat.setAlignment(Qt.AlignCenter)
             count_label = QLabel("0")
