@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import json
 from PySide6.QtWidgets import (
-    QWidget, QVBoxLayout, QHBoxLayout, QSplitter,
+    QWidget, QVBoxLayout, QHBoxLayout,
     QListWidget, QPushButton, QLineEdit,
     QTabWidget, QInputDialog, QMessageBox, QFileDialog,
 )
@@ -27,15 +27,15 @@ class CommonPage(QWidget):
         self._refresh_list()
 
     def _init_ui(self):
-        splitter = QSplitter(Qt.Horizontal, self)
         root = QHBoxLayout(self)
         root.setContentsMargins(12, 12, 12, 12)
-        root.addWidget(splitter)
+        root.setSpacing(12)
 
         # 左侧
         left = QWidget()
+        left.setFixedWidth(220)
         left_layout = QVBoxLayout(left)
-        left_layout.setContentsMargins(0, 0, 8, 0)
+        left_layout.setContentsMargins(0, 0, 0, 0)
         left_layout.setSpacing(8)
         left_layout.addWidget(make_title("通用词条组"))
 
@@ -73,7 +73,7 @@ class CommonPage(QWidget):
         batch_row.addWidget(batch_import_btn)
         left_layout.addLayout(batch_row)
 
-        splitter.addWidget(left)
+        root.addWidget(left)
 
         # 右侧
         self._right = QWidget()
@@ -114,10 +114,7 @@ class CommonPage(QWidget):
         right_layout.addWidget(self._tabs)
 
         self._right.setVisible(False)
-        splitter.addWidget(self._right)
-        splitter.setSizes([220, 580])
-        splitter.setStretchFactor(0, 0)
-        splitter.setStretchFactor(1, 1)
+        root.addWidget(self._right, 1)
 
     # ── 列表操作 ──
 

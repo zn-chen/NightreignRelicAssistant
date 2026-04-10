@@ -4,10 +4,11 @@ from __future__ import annotations
 
 import json
 from PySide6.QtWidgets import (
-    QWidget, QVBoxLayout, QHBoxLayout, QSplitter,
+    QWidget, QVBoxLayout, QHBoxLayout,
     QListWidget, QPushButton, QLineEdit,
     QGroupBox, QCheckBox, QSpinBox, QTabWidget,
     QScrollArea, QInputDialog, QMessageBox, QFileDialog,
+    QSizePolicy,
 )
 from PySide6.QtCore import Qt
 
@@ -28,15 +29,15 @@ class BuildPage(QWidget):
         self._refresh_list()
 
     def _init_ui(self):
-        splitter = QSplitter(Qt.Horizontal, self)
         root = QHBoxLayout(self)
         root.setContentsMargins(12, 12, 12, 12)
-        root.addWidget(splitter)
+        root.setSpacing(12)
 
         # 左侧
         left = QWidget()
+        left.setFixedWidth(220)
         left_layout = QVBoxLayout(left)
-        left_layout.setContentsMargins(0, 0, 8, 0)
+        left_layout.setContentsMargins(0, 0, 0, 0)
         left_layout.setSpacing(8)
         left_layout.addWidget(make_title("BUILD 列表"))
 
@@ -75,7 +76,7 @@ class BuildPage(QWidget):
         batch_row.addWidget(batch_import_btn)
         left_layout.addLayout(batch_row)
 
-        splitter.addWidget(left)
+        root.addWidget(left)
 
         # 右侧
         scroll = QScrollArea()
@@ -140,10 +141,7 @@ class BuildPage(QWidget):
         scroll.setWidget(self._right)
         self._scroll = scroll
         self._scroll.setVisible(False)
-        splitter.addWidget(self._scroll)
-        splitter.setSizes([220, 580])
-        splitter.setStretchFactor(0, 0)  # 左侧不随窗口拉伸
-        splitter.setStretchFactor(1, 1)  # 右侧吃掉所有多余空间
+        root.addWidget(self._scroll, 1)  # stretch=1, 右侧吃掉多余空间
 
         self._populate_common_checkboxes()
 
