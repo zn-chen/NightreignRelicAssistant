@@ -2,10 +2,11 @@
 
 from PySide6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout,
-    QComboBox, QSpinBox, QPushButton, QCheckBox,
+    QSpinBox, QPushButton, QCheckBox,
     QTextEdit, QLabel,
 )
 from PySide6.QtCore import Qt
+from qfluentwidgets import ComboBox
 from nra.ui.widgets.helpers import make_card
 
 
@@ -27,7 +28,7 @@ class ShopPage(QWidget):
         match_card, match_layout = make_card("匹配设置")
         match_row = QHBoxLayout()
         match_row.addWidget(QLabel("匹配模式:"))
-        self._match_combo = QComboBox()
+        self._match_combo = ComboBox()
         self._match_combo.addItems(["双有效", "三有效"])
         match_row.addWidget(self._match_combo)
         match_layout.addLayout(match_row)

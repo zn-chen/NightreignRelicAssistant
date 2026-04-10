@@ -26,8 +26,8 @@ class RepoPage(QWidget):
         match_card, match_layout = make_card("匹配设置")
         match_row = QHBoxLayout()
         match_row.addWidget(QLabel("匹配模式:"))
-        from PySide6.QtWidgets import QComboBox
-        self._match_combo = QComboBox()
+        from qfluentwidgets import ComboBox
+        self._match_combo = ComboBox()
         self._match_combo.addItems(["双有效", "三有效"])
         match_row.addWidget(self._match_combo)
         match_layout.addLayout(match_row)
