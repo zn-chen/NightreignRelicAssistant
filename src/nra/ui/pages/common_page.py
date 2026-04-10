@@ -38,8 +38,6 @@ class CommonPage(ListDetailLayout):
         # 右侧
         rl = self._right_layout
 
-        rl.addWidget(make_title("组编辑"))
-
         self._name_edit = QLineEdit()
         self._name_edit.setPlaceholderText("组名称")
         self._name_edit.editingFinished.connect(self._on_name_changed)
@@ -107,7 +105,7 @@ class CommonPage(ListDetailLayout):
             return
         group = self._pm.common_groups[row]
         answer = QMessageBox.question(self, "确认删除",
-            f"确定删除通用词条组 \"{group['name']}\" 吗？\n引用此组的 BUILD 将自动解除关联。")
+            f"确定删除通用词条组 \"{group['name']}\" 吗？\n引用此组的 构筑 将自动解除关联。")
         if answer != QMessageBox.Yes:
             return
         self._pm.delete_common_group(group["id"])

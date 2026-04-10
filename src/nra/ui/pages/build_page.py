@@ -1,4 +1,4 @@
-"""角色 BUILD 管理页面"""
+"""角色 构筑 管理页面"""
 
 from __future__ import annotations
 
@@ -27,7 +27,7 @@ class BuildPage(ListDetailLayout):
 
     def _setup(self):
         # 左侧
-        self._left_layout.insertWidget(0, make_title("BUILD 列表"))
+        self._left_layout.insertWidget(0, make_title("构筑列表"))
         self._list.currentRowChanged.connect(self._on_selection_changed)
         self._add_left_buttons(
             [("新建", self._on_add), ("删除", self._on_delete)],
@@ -38,10 +38,8 @@ class BuildPage(ListDetailLayout):
         # 右侧
         rl = self._right_layout
 
-        rl.addWidget(make_title("BUILD 编辑"))
-
         self._name_edit = QLineEdit()
-        self._name_edit.setPlaceholderText("BUILD 名称")
+        self._name_edit.setPlaceholderText("构筑名称")
         self._name_edit.editingFinished.connect(self._on_name_changed)
         rl.addWidget(self._name_edit)
 
@@ -152,7 +150,7 @@ class BuildPage(ListDetailLayout):
         self._blacklist_editor.set_affixes(build.get("blacklist", []))
 
     def _on_add(self):
-        name, ok = QInputDialog.getText(self, "新建 BUILD", "BUILD 名称:")
+        name, ok = QInputDialog.getText(self, "新建构筑", "构筑名称:")
         if not ok or not name.strip():
             return
         self._pm.create_build(name.strip())
@@ -165,7 +163,7 @@ class BuildPage(ListDetailLayout):
             return
         build = self._pm.builds[row]
         answer = QMessageBox.question(self, "确认删除",
-            f"确定删除 BUILD \"{build['name']}\" 吗？")
+            f"确定删除构筑 \"{build['name']}\" 吗？")
         if answer != QMessageBox.Yes:
             return
         self._pm.delete_build(build["id"])
@@ -181,10 +179,10 @@ class BuildPage(ListDetailLayout):
     def _on_export_single(self):
         row = self._list.currentRow()
         if row < 0:
-            QMessageBox.information(self, "提示", "请先选择一个 BUILD")
+            QMessageBox.information(self, "提示", "请先选择一个 构筑")
             return
         build = self._pm.builds[row]
-        path, _ = QFileDialog.getSaveFileName(self, "导出 BUILD",
+        path, _ = QFileDialog.getSaveFileName(self, "导出构筑",
             f"{build['name']}.json", "JSON (*.json)")
         if not path:
             return
@@ -192,12 +190,12 @@ class BuildPage(ListDetailLayout):
             json.dump(self._build_export_data(build), f, ensure_ascii=False, indent=2)
 
     def _on_import_single(self):
-        path, _ = QFileDialog.getOpenFileName(self, "导入 BUILD", "", "JSON (*.json)")
+        path, _ = QFileDialog.getOpenFileName(self, "导入构筑", "", "JSON (*.json)")
         if not path:
             return
         with open(path, "r", encoding="utf-8") as f:
             data = json.load(f)
-        name = data.get("name", "导入的BUILD")
+        name = data.get("name", "导入的构筑")
         build = self._pm.create_build(name)
         self._pm.update_build(build["id"], **{k: v for k, v in data.items() if k in build and k != "id"})
         self._refresh_list()
@@ -205,9 +203,9 @@ class BuildPage(ListDetailLayout):
 
     def _on_export_all(self):
         if not self._pm.builds:
-            QMessageBox.information(self, "提示", "没有可导出的 BUILD")
+            QMessageBox.information(self, "提示", "没有可导出的 构筑")
             return
-        path, _ = QFileDialog.getSaveFileName(self, "批量导出 BUILD",
+        path, _ = QFileDialog.getSaveFileName(self, "批量导出构筑",
             "builds.json", "JSON (*.json)")
         if not path:
             return
@@ -216,7 +214,7 @@ class BuildPage(ListDetailLayout):
             json.dump(data, f, ensure_ascii=False, indent=2)
 
     def _on_import_all(self):
-        path, _ = QFileDialog.getOpenFileName(self, "批量导入 BUILD", "", "JSON (*.json)")
+        path, _ = QFileDialog.getOpenFileName(self, "批量导入构筑", "", "JSON (*.json)")
         if not path:
             return
         with open(path, "r", encoding="utf-8") as f:
@@ -225,7 +223,7 @@ class BuildPage(ListDetailLayout):
             QMessageBox.warning(self, "格式错误", "批量导入需要 JSON 数组格式")
             return
         for item in data:
-            name = item.get("name", "导入的BUILD")
+            name = item.get("name", "导入的构筑")
             build = self._pm.create_build(name)
             self._pm.update_build(build["id"], **{k: v for k, v in item.items() if k in build and k != "id"})
         self._refresh_list()

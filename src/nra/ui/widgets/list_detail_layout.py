@@ -21,7 +21,7 @@ class ListDetailLayout(QWidget):
 
     def _init_base_layout(self):
         root = QHBoxLayout(self)
-        root.setContentsMargins(12, 12, 12, 12)
+        root.setContentsMargins(12, 20, 12, 12)
         root.setSpacing(12)
         self._root_layout = root
 
@@ -47,7 +47,7 @@ class ListDetailLayout(QWidget):
 
         self._right_panel = QWidget()
         self._right_layout = QVBoxLayout(self._right_panel)
-        self._right_layout.setContentsMargins(4, 0, 0, 0)
+        self._right_layout.setContentsMargins(4, 0, 4, 0)
         self._right_layout.setSpacing(10)
 
         self._scroll.setWidget(self._right_panel)
