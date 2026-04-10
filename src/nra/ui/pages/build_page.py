@@ -55,7 +55,7 @@ class BuildPage(QWidget):
 
         splitter.addWidget(left)
 
-        # 右侧 (scrollable)
+        # 右侧
         scroll = QScrollArea()
         scroll.setWidgetResizable(True)
 
@@ -66,7 +66,6 @@ class BuildPage(QWidget):
 
         right_layout.addWidget(make_title("Build 编辑"))
 
-        # 名称
         self._name_edit = QLineEdit()
         self._name_edit.setPlaceholderText("Build 名称")
         self._name_edit.editingFinished.connect(self._on_name_changed)
@@ -93,24 +92,29 @@ class BuildPage(QWidget):
         self._common_group_layout.setSpacing(4)
         right_layout.addWidget(self._common_group_box)
 
-        # 黑名单引用
-        self._blacklist_group_box = QGroupBox("引用黑名单组")
-        self._blacklist_group_layout = QVBoxLayout(self._blacklist_group_box)
-        self._blacklist_group_layout.setSpacing(4)
-        right_layout.addWidget(self._blacklist_group_box)
-
-        # 白名单
+        # 词条编辑 tabs
         normal_vocab = self._vl.load(["normal.txt", "normal_special.txt"])
-        deepnight_vocab = self._vl.load(["deepnight_pos.txt"])
+        deepnight_pos_vocab = self._vl.load(["deepnight_pos.txt"])
+        deepnight_neg_vocab = self._vl.load(["deepnight_neg.txt"])
+        all_vocab = self._vl.load(["normal.txt", "normal_special.txt", "deepnight_pos.txt", "deepnight_neg.txt"])
 
         self._tabs = QTabWidget()
+
         self._normal_editor = AffixEditor(normal_vocab)
         self._normal_editor.affixes_changed.connect(self._on_normal_changed)
         self._tabs.addTab(self._normal_editor, "普通白名单")
 
-        self._deepnight_editor = AffixEditor(deepnight_vocab)
+        self._deepnight_editor = AffixEditor(deepnight_pos_vocab)
         self._deepnight_editor.affixes_changed.connect(self._on_deepnight_changed)
-        self._tabs.addTab(self._deepnight_editor, "深夜白名单")
+        self._tabs.addTab(self._deepnight_editor, "深夜正面")
+
+        self._deepnight_neg_editor = AffixEditor(deepnight_neg_vocab)
+        self._deepnight_neg_editor.affixes_changed.connect(self._on_deepnight_neg_changed)
+        self._tabs.addTab(self._deepnight_neg_editor, "深夜负面")
+
+        self._blacklist_editor = AffixEditor(all_vocab)
+        self._blacklist_editor.affixes_changed.connect(self._on_blacklist_changed)
+        self._tabs.addTab(self._blacklist_editor, "黑名单")
 
         right_layout.addWidget(self._tabs)
 
@@ -118,12 +122,10 @@ class BuildPage(QWidget):
         scroll.setWidget(self._right)
         splitter.addWidget(scroll)
         splitter.setSizes([220, 580])
-
         splitter.setStretchFactor(0, 1)
         splitter.setStretchFactor(1, 3)
 
         self._populate_common_checkboxes()
-        self._populate_blacklist_checkboxes()
 
     # ── Group Checkboxes ──
 
@@ -139,18 +141,6 @@ class BuildPage(QWidget):
             self._common_group_layout.addWidget(cb)
             self._common_cbs.append((group["id"], cb))
 
-    def _populate_blacklist_checkboxes(self):
-        while self._blacklist_group_layout.count():
-            item = self._blacklist_group_layout.takeAt(0)
-            if item.widget():
-                item.widget().deleteLater()
-        self._blacklist_cbs: list[tuple[str, QCheckBox]] = []
-        for group in self._pm.blacklist_groups:
-            cb = QCheckBox(group["name"])
-            cb.stateChanged.connect(self._on_blacklist_ids_changed)
-            self._blacklist_group_layout.addWidget(cb)
-            self._blacklist_cbs.append((group["id"], cb))
-
     def _sync_common_checkboxes(self, build: dict):
         checked_ids = set(build.get("common_group_ids", []))
         for gid, cb in self._common_cbs:
@@ -158,21 +148,12 @@ class BuildPage(QWidget):
             cb.setChecked(gid in checked_ids)
             cb.blockSignals(False)
 
-    def _sync_blacklist_checkboxes(self, build: dict):
-        checked_ids = set(build.get("blacklist_group_ids", []))
-        for gid, cb in self._blacklist_cbs:
-            cb.blockSignals(True)
-            cb.setChecked(gid in checked_ids)
-            cb.blockSignals(False)
-
     def refresh_group_refs(self):
         self._populate_common_checkboxes()
-        self._populate_blacklist_checkboxes()
         if self._current_build_id is not None:
             build = self._pm.get_build(self._current_build_id)
             if build is not None:
                 self._sync_common_checkboxes(build)
-                self._sync_blacklist_checkboxes(build)
 
     # ── 列表操作 ──
 
@@ -200,9 +181,10 @@ class BuildPage(QWidget):
         self._common_group_box.setChecked(build.get("include_common", True))
         self._common_group_box.blockSignals(False)
         self._sync_common_checkboxes(build)
-        self._sync_blacklist_checkboxes(build)
         self._normal_editor.set_affixes(build.get("normal_whitelist", []))
         self._deepnight_editor.set_affixes(build.get("deepnight_whitelist", []))
+        self._deepnight_neg_editor.set_affixes(build.get("deepnight_neg_whitelist", []))
+        self._blacklist_editor.set_affixes(build.get("blacklist", []))
 
     def _on_add(self):
         name, ok = QInputDialog.getText(self, "新建 Build", "Build 名称:")
@@ -252,11 +234,6 @@ class BuildPage(QWidget):
             ids = [gid for gid, cb in self._common_cbs if cb.isChecked()]
             self._pm.update_build(self._current_build_id, common_group_ids=ids)
 
-    def _on_blacklist_ids_changed(self):
-        if self._current_build_id:
-            ids = [gid for gid, cb in self._blacklist_cbs if cb.isChecked()]
-            self._pm.update_build(self._current_build_id, blacklist_group_ids=ids)
-
     def _on_normal_changed(self, affixes):
         if self._current_build_id:
             self._pm.update_build(self._current_build_id, normal_whitelist=affixes)
@@ -264,3 +241,11 @@ class BuildPage(QWidget):
     def _on_deepnight_changed(self, affixes):
         if self._current_build_id:
             self._pm.update_build(self._current_build_id, deepnight_whitelist=affixes)
+
+    def _on_deepnight_neg_changed(self, affixes):
+        if self._current_build_id:
+            self._pm.update_build(self._current_build_id, deepnight_neg_whitelist=affixes)
+
+    def _on_blacklist_changed(self, affixes):
+        if self._current_build_id:
+            self._pm.update_build(self._current_build_id, blacklist=affixes)

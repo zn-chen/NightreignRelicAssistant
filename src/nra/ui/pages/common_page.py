@@ -68,23 +68,33 @@ class CommonPage(QWidget):
         right_layout.addWidget(self._name_edit)
 
         normal_vocab = self._vl.load(["normal.txt", "normal_special.txt"])
-        deepnight_vocab = self._vl.load(["deepnight_pos.txt"])
+        deepnight_pos_vocab = self._vl.load(["deepnight_pos.txt"])
+        deepnight_neg_vocab = self._vl.load(["deepnight_neg.txt"])
+        all_vocab = self._vl.load(["normal.txt", "normal_special.txt", "deepnight_pos.txt", "deepnight_neg.txt"])
 
         self._tabs = QTabWidget()
+
         self._normal_editor = AffixEditor(normal_vocab)
         self._normal_editor.affixes_changed.connect(self._on_normal_changed)
-        self._tabs.addTab(self._normal_editor, "普通词条")
+        self._tabs.addTab(self._normal_editor, "普通白名单")
 
-        self._deepnight_editor = AffixEditor(deepnight_vocab)
+        self._deepnight_editor = AffixEditor(deepnight_pos_vocab)
         self._deepnight_editor.affixes_changed.connect(self._on_deepnight_changed)
-        self._tabs.addTab(self._deepnight_editor, "深夜词条")
+        self._tabs.addTab(self._deepnight_editor, "深夜正面")
+
+        self._deepnight_neg_editor = AffixEditor(deepnight_neg_vocab)
+        self._deepnight_neg_editor.affixes_changed.connect(self._on_deepnight_neg_changed)
+        self._tabs.addTab(self._deepnight_neg_editor, "深夜负面")
+
+        self._blacklist_editor = AffixEditor(all_vocab)
+        self._blacklist_editor.affixes_changed.connect(self._on_blacklist_changed)
+        self._tabs.addTab(self._blacklist_editor, "黑名单")
 
         right_layout.addWidget(self._tabs)
 
         self._right.setEnabled(False)
         splitter.addWidget(self._right)
         splitter.setSizes([220, 580])
-
         splitter.setStretchFactor(0, 1)
         splitter.setStretchFactor(1, 3)
 
@@ -106,6 +116,8 @@ class CommonPage(QWidget):
         self._name_edit.setText(group["name"])
         self._normal_editor.set_affixes(group.get("normal_affixes", []))
         self._deepnight_editor.set_affixes(group.get("deepnight_affixes", []))
+        self._deepnight_neg_editor.set_affixes(group.get("deepnight_neg_affixes", []))
+        self._blacklist_editor.set_affixes(group.get("blacklist_affixes", []))
 
     def _on_add(self):
         name, ok = QInputDialog.getText(self, "新建通用词条组", "组名:")
@@ -147,3 +159,11 @@ class CommonPage(QWidget):
     def _on_deepnight_changed(self, affixes):
         if self._current_group_id:
             self._pm.update_common_group(self._current_group_id, deepnight_affixes=affixes)
+
+    def _on_deepnight_neg_changed(self, affixes):
+        if self._current_group_id:
+            self._pm.update_common_group(self._current_group_id, deepnight_neg_affixes=affixes)
+
+    def _on_blacklist_changed(self, affixes):
+        if self._current_group_id:
+            self._pm.update_common_group(self._current_group_id, blacklist_affixes=affixes)
