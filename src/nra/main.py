@@ -5,7 +5,18 @@ import os
 
 
 def main():
-    pass
+    from PySide6.QtWidgets import QApplication, QStyleFactory
+    from nra.ui.main_window import MainWindow
+
+    app = QApplication(sys.argv)
+    app.setStyle(QStyleFactory.create("Fusion"))
+
+    data_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "data")
+    data_dir = os.path.normpath(data_dir)
+
+    window = MainWindow(data_dir=data_dir)
+    window.show()
+    sys.exit(app.exec())
 
 
 if __name__ == "__main__":
