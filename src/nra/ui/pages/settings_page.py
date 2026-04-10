@@ -4,15 +4,12 @@ import json
 import os
 from PySide6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel,
-    QLineEdit, QPushButton, QFileDialog, QCheckBox, QComboBox,
+    QLineEdit, QPushButton, QFileDialog, QCheckBox,
 )
-from PySide6.QtCore import Signal
 from nra.ui.widgets.helpers import make_card
 
 
 class SettingsPage(QWidget):
-    theme_changed = Signal(str)
-
     def __init__(self, settings_path: str, parent=None):
         super().__init__(parent)
         self._settings_path = settings_path
@@ -39,20 +36,6 @@ class SettingsPage(QWidget):
         layout = QVBoxLayout(self)
         layout.setContentsMargins(12, 20, 12, 12)
         layout.setSpacing(12)
-
-        # 外观
-        theme_card, theme_layout = make_card("外观")
-        theme_row = QHBoxLayout()
-        theme_row.addWidget(QLabel("主题:"))
-        self._theme_combo = QComboBox()
-        self._theme_combo.addItems(["跟随系统", "浅色", "深色"])
-        current = self._settings.get("theme", "system")
-        index = {"system": 0, "light": 1, "dark": 2}.get(current, 0)
-        self._theme_combo.setCurrentIndex(index)
-        self._theme_combo.currentIndexChanged.connect(self._on_theme_changed)
-        theme_row.addWidget(self._theme_combo)
-        theme_layout.addLayout(theme_row)
-        layout.addWidget(theme_card)
 
         # 存档备份
         backup_card, backup_layout = make_card("存档备份")
@@ -101,14 +84,6 @@ class SettingsPage(QWidget):
 
         layout.addStretch()
 
-    # 外观
-    def _on_theme_changed(self, index):
-        theme = ["system", "light", "dark"][index]
-        self._settings["theme"] = theme
-        self._save()
-        self.theme_changed.emit(theme)
-
-    # 存档备份
     def _browse_steam_path(self):
         d = QFileDialog.getExistingDirectory(self, "选择 Steam 目录")
         if d:
@@ -129,7 +104,6 @@ class SettingsPage(QWidget):
         self._settings["backup_dir"] = self._backup_dir_input.text()
         self._save()
 
-    # 出货通知
     def _on_dingtalk_toggled(self, state):
         self._settings["dingtalk_enabled"] = bool(state)
         self._save()
