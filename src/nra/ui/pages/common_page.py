@@ -2,10 +2,11 @@
 
 from __future__ import annotations
 
+import json
 from PySide6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QSplitter,
     QListWidget, QPushButton, QLineEdit,
-    QTabWidget, QInputDialog, QMessageBox,
+    QTabWidget, QInputDialog, QMessageBox, QFileDialog,
 )
 from PySide6.QtCore import Qt
 
@@ -52,6 +53,26 @@ class CommonPage(QWidget):
         btn_row.addWidget(del_btn)
         left_layout.addLayout(btn_row)
 
+        io_row = QHBoxLayout()
+        io_row.setSpacing(6)
+        export_btn = QPushButton("导出")
+        export_btn.clicked.connect(self._on_export_single)
+        import_btn = QPushButton("导入")
+        import_btn.clicked.connect(self._on_import_single)
+        io_row.addWidget(export_btn)
+        io_row.addWidget(import_btn)
+        left_layout.addLayout(io_row)
+
+        batch_row = QHBoxLayout()
+        batch_row.setSpacing(6)
+        batch_export_btn = QPushButton("批量导出")
+        batch_export_btn.clicked.connect(self._on_export_all)
+        batch_import_btn = QPushButton("批量导入")
+        batch_import_btn.clicked.connect(self._on_import_all)
+        batch_row.addWidget(batch_export_btn)
+        batch_row.addWidget(batch_import_btn)
+        left_layout.addLayout(batch_row)
+
         splitter.addWidget(left)
 
         # 右侧
@@ -92,11 +113,13 @@ class CommonPage(QWidget):
 
         right_layout.addWidget(self._tabs)
 
-        self._right.setEnabled(False)
+        self._right.setVisible(False)
         splitter.addWidget(self._right)
         splitter.setSizes([220, 580])
         splitter.setStretchFactor(0, 1)
         splitter.setStretchFactor(1, 3)
+
+    # ── 列表操作 ──
 
     def _refresh_list(self):
         self._list.blockSignals(True)
@@ -108,11 +131,11 @@ class CommonPage(QWidget):
     def _on_selection_changed(self, row: int):
         if row < 0 or row >= len(self._pm.common_groups):
             self._current_group_id = None
-            self._right.setEnabled(False)
+            self._right.setVisible(False)
             return
         group = self._pm.common_groups[row]
         self._current_group_id = group["id"]
-        self._right.setEnabled(True)
+        self._right.setVisible(True)
         self._name_edit.setText(group["name"])
         self._normal_editor.set_affixes(group.get("normal_affixes", []))
         self._deepnight_editor.set_affixes(group.get("deepnight_affixes", []))
@@ -133,13 +156,72 @@ class CommonPage(QWidget):
             return
         group = self._pm.common_groups[row]
         answer = QMessageBox.question(self, "确认删除",
-            f"确定删除通用词条组 \"{group['name']}\" 吗？\n引用此组的 Build 将自动解除关联。")
+            f"确定删除通用词条组 \"{group['name']}\" 吗？\n引用此组的 BUILD 将自动解除关联。")
         if answer != QMessageBox.Yes:
             return
         self._pm.delete_common_group(group["id"])
         self._current_group_id = None
-        self._right.setEnabled(False)
+        self._right.setVisible(False)
         self._refresh_list()
+
+    # ── 导入导出 ──
+
+    def _group_export_data(self, group: dict) -> dict:
+        return {k: v for k, v in group.items() if k != "id"}
+
+    def _on_export_single(self):
+        row = self._list.currentRow()
+        if row < 0:
+            QMessageBox.information(self, "提示", "请先选择一个通用组")
+            return
+        group = self._pm.common_groups[row]
+        path, _ = QFileDialog.getSaveFileName(self, "导出通用组",
+            f"{group['name']}.json", "JSON (*.json)")
+        if not path:
+            return
+        with open(path, "w", encoding="utf-8") as f:
+            json.dump(self._group_export_data(group), f, ensure_ascii=False, indent=2)
+
+    def _on_import_single(self):
+        path, _ = QFileDialog.getOpenFileName(self, "导入通用组", "", "JSON (*.json)")
+        if not path:
+            return
+        with open(path, "r", encoding="utf-8") as f:
+            data = json.load(f)
+        name = data.get("name", "导入的通用组")
+        group = self._pm.create_common_group(name)
+        self._pm.update_common_group(group["id"], **{k: v for k, v in data.items() if k in group and k != "id"})
+        self._refresh_list()
+        self._list.setCurrentRow(self._list.count() - 1)
+
+    def _on_export_all(self):
+        if not self._pm.common_groups:
+            QMessageBox.information(self, "提示", "没有可导出的通用组")
+            return
+        path, _ = QFileDialog.getSaveFileName(self, "批量导出通用组",
+            "common_groups.json", "JSON (*.json)")
+        if not path:
+            return
+        data = [self._group_export_data(g) for g in self._pm.common_groups]
+        with open(path, "w", encoding="utf-8") as f:
+            json.dump(data, f, ensure_ascii=False, indent=2)
+
+    def _on_import_all(self):
+        path, _ = QFileDialog.getOpenFileName(self, "批量导入通用组", "", "JSON (*.json)")
+        if not path:
+            return
+        with open(path, "r", encoding="utf-8") as f:
+            data = json.load(f)
+        if not isinstance(data, list):
+            QMessageBox.warning(self, "格式错误", "批量导入需要 JSON 数组格式")
+            return
+        for item in data:
+            name = item.get("name", "导入的通用组")
+            group = self._pm.create_common_group(name)
+            self._pm.update_common_group(group["id"], **{k: v for k, v in item.items() if k in group and k != "id"})
+        self._refresh_list()
+
+    # ── 自动保存 ──
 
     def _on_name_changed(self):
         if self._current_group_id is None:

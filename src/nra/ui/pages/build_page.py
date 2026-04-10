@@ -1,12 +1,13 @@
-"""角色 Build 管理页面"""
+"""角色 BUILD 管理页面"""
 
 from __future__ import annotations
 
+import json
 from PySide6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QSplitter,
     QListWidget, QPushButton, QLineEdit,
     QGroupBox, QCheckBox, QSpinBox, QTabWidget,
-    QScrollArea, QInputDialog, QMessageBox,
+    QScrollArea, QInputDialog, QMessageBox, QFileDialog,
 )
 from PySide6.QtCore import Qt
 
@@ -37,7 +38,7 @@ class BuildPage(QWidget):
         left_layout = QVBoxLayout(left)
         left_layout.setContentsMargins(0, 0, 8, 0)
         left_layout.setSpacing(8)
-        left_layout.addWidget(make_title("角色 Build"))
+        left_layout.addWidget(make_title("BUILD 列表"))
 
         self._list = QListWidget()
         self._list.currentRowChanged.connect(self._on_selection_changed)
@@ -53,6 +54,27 @@ class BuildPage(QWidget):
         btn_row.addWidget(del_btn)
         left_layout.addLayout(btn_row)
 
+        # 导入导出
+        io_row = QHBoxLayout()
+        io_row.setSpacing(6)
+        export_btn = QPushButton("导出")
+        export_btn.clicked.connect(self._on_export_single)
+        import_btn = QPushButton("导入")
+        import_btn.clicked.connect(self._on_import_single)
+        io_row.addWidget(export_btn)
+        io_row.addWidget(import_btn)
+        left_layout.addLayout(io_row)
+
+        batch_row = QHBoxLayout()
+        batch_row.setSpacing(6)
+        batch_export_btn = QPushButton("批量导出")
+        batch_export_btn.clicked.connect(self._on_export_all)
+        batch_import_btn = QPushButton("批量导入")
+        batch_import_btn.clicked.connect(self._on_import_all)
+        batch_row.addWidget(batch_export_btn)
+        batch_row.addWidget(batch_import_btn)
+        left_layout.addLayout(batch_row)
+
         splitter.addWidget(left)
 
         # 右侧
@@ -64,14 +86,13 @@ class BuildPage(QWidget):
         right_layout.setContentsMargins(8, 0, 0, 0)
         right_layout.setSpacing(12)
 
-        right_layout.addWidget(make_title("Build 编辑"))
+        right_layout.addWidget(make_title("BUILD 编辑"))
 
         self._name_edit = QLineEdit()
-        self._name_edit.setPlaceholderText("Build 名称")
+        self._name_edit.setPlaceholderText("BUILD 名称")
         self._name_edit.editingFinished.connect(self._on_name_changed)
         right_layout.addWidget(self._name_edit)
 
-        # 匹配数
         min_row = QHBoxLayout()
         min_row.addWidget(make_title("最少命中词条数"))
         self._min_spin = QSpinBox()
@@ -83,7 +104,6 @@ class BuildPage(QWidget):
         min_row.addStretch()
         right_layout.addLayout(min_row)
 
-        # 通用组引用
         self._common_group_box = QGroupBox("引用通用词条组")
         self._common_group_box.setCheckable(True)
         self._common_group_box.setChecked(True)
@@ -92,7 +112,6 @@ class BuildPage(QWidget):
         self._common_group_layout.setSpacing(4)
         right_layout.addWidget(self._common_group_box)
 
-        # 词条编辑 tabs
         normal_vocab = self._vl.load(["normal.txt", "normal_special.txt"])
         deepnight_pos_vocab = self._vl.load(["deepnight_pos.txt"])
         deepnight_neg_vocab = self._vl.load(["deepnight_neg.txt"])
@@ -118,7 +137,7 @@ class BuildPage(QWidget):
 
         right_layout.addWidget(self._tabs)
 
-        self._right.setEnabled(False)
+        self._right.setVisible(False)
         scroll.setWidget(self._right)
         splitter.addWidget(scroll)
         splitter.setSizes([220, 580])
@@ -167,11 +186,11 @@ class BuildPage(QWidget):
     def _on_selection_changed(self, row: int):
         if row < 0 or row >= len(self._pm.builds):
             self._current_build_id = None
-            self._right.setEnabled(False)
+            self._right.setVisible(False)
             return
         build = self._pm.builds[row]
         self._current_build_id = build["id"]
-        self._right.setEnabled(True)
+        self._right.setVisible(True)
 
         self._name_edit.setText(build["name"])
         self._min_spin.blockSignals(True)
@@ -187,7 +206,7 @@ class BuildPage(QWidget):
         self._blacklist_editor.set_affixes(build.get("blacklist", []))
 
     def _on_add(self):
-        name, ok = QInputDialog.getText(self, "新建 Build", "Build 名称:")
+        name, ok = QInputDialog.getText(self, "新建 BUILD", "BUILD 名称:")
         if not ok or not name.strip():
             return
         self._pm.create_build(name.strip())
@@ -200,12 +219,71 @@ class BuildPage(QWidget):
             return
         build = self._pm.builds[row]
         answer = QMessageBox.question(self, "确认删除",
-            f"确定删除 Build \"{build['name']}\" 吗？")
+            f"确定删除 BUILD \"{build['name']}\" 吗？")
         if answer != QMessageBox.Yes:
             return
         self._pm.delete_build(build["id"])
         self._current_build_id = None
-        self._right.setEnabled(False)
+        self._right.setVisible(False)
+        self._refresh_list()
+
+    # ── 导入导出 ──
+
+    def _build_export_data(self, build: dict) -> dict:
+        """提取 build 的可导出数据（去掉 id 和 common_group_ids）"""
+        return {k: v for k, v in build.items() if k not in ("id", "common_group_ids")}
+
+    def _on_export_single(self):
+        row = self._list.currentRow()
+        if row < 0:
+            QMessageBox.information(self, "提示", "请先选择一个 BUILD")
+            return
+        build = self._pm.builds[row]
+        path, _ = QFileDialog.getSaveFileName(self, "导出 BUILD",
+            f"{build['name']}.json", "JSON (*.json)")
+        if not path:
+            return
+        data = self._build_export_data(build)
+        with open(path, "w", encoding="utf-8") as f:
+            json.dump(data, f, ensure_ascii=False, indent=2)
+
+    def _on_import_single(self):
+        path, _ = QFileDialog.getOpenFileName(self, "导入 BUILD", "", "JSON (*.json)")
+        if not path:
+            return
+        with open(path, "r", encoding="utf-8") as f:
+            data = json.load(f)
+        name = data.get("name", "导入的BUILD")
+        build = self._pm.create_build(name)
+        self._pm.update_build(build["id"], **{k: v for k, v in data.items() if k in build and k != "id"})
+        self._refresh_list()
+        self._list.setCurrentRow(self._list.count() - 1)
+
+    def _on_export_all(self):
+        if not self._pm.builds:
+            QMessageBox.information(self, "提示", "没有可导出的 BUILD")
+            return
+        path, _ = QFileDialog.getSaveFileName(self, "批量导出 BUILD",
+            "builds.json", "JSON (*.json)")
+        if not path:
+            return
+        data = [self._build_export_data(b) for b in self._pm.builds]
+        with open(path, "w", encoding="utf-8") as f:
+            json.dump(data, f, ensure_ascii=False, indent=2)
+
+    def _on_import_all(self):
+        path, _ = QFileDialog.getOpenFileName(self, "批量导入 BUILD", "", "JSON (*.json)")
+        if not path:
+            return
+        with open(path, "r", encoding="utf-8") as f:
+            data = json.load(f)
+        if not isinstance(data, list):
+            QMessageBox.warning(self, "格式错误", "批量导入需要 JSON 数组格式")
+            return
+        for item in data:
+            name = item.get("name", "导入的BUILD")
+            build = self._pm.create_build(name)
+            self._pm.update_build(build["id"], **{k: v for k, v in item.items() if k in build and k != "id"})
         self._refresh_list()
 
     # ── 自动保存 ──

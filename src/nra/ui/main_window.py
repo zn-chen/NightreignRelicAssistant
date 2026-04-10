@@ -29,7 +29,7 @@ class MainWindow(QMainWindow):
         tabs.addTab(self._repo_page, "仓库整理")
 
         self._build_page = BuildPage(self._preset_manager, self._vocab_loader)
-        tabs.addTab(self._build_page, "Build 管理")
+        tabs.addTab(self._build_page, "BUILD 管理")
 
         self._common_page = CommonPage(self._preset_manager, self._vocab_loader)
         tabs.addTab(self._common_page, "通用管理")
