@@ -1,10 +1,12 @@
 """词条编辑器 — 搜索+添加的复用组件"""
 
 from PySide6.QtWidgets import (
-    QWidget, QVBoxLayout, QHBoxLayout, QLineEdit,
-    QListWidget, QListWidgetItem, QPushButton, QLabel,
+    QWidget, QVBoxLayout, QHBoxLayout, QListWidgetItem,
 )
-from PySide6.QtCore import Signal, Qt
+from PySide6.QtCore import Signal
+from qfluentwidgets import (
+    SearchLineEdit, ListWidget, PushButton, BodyLabel,
+)
 
 
 class AffixEditor(QWidget):
@@ -21,41 +23,36 @@ class AffixEditor(QWidget):
     def _init_ui(self):
         layout = QVBoxLayout(self)
         layout.setContentsMargins(8, 8, 8, 8)
-        layout.setSpacing(6)
+        layout.setSpacing(8)
 
         # 搜索框
-        self._search_input = QLineEdit()
+        self._search_input = SearchLineEdit()
         self._search_input.setPlaceholderText("输入关键字搜索词条...")
-        self._search_input.setClearButtonEnabled(True)
         self._search_input.textChanged.connect(self._on_search)
         layout.addWidget(self._search_input)
 
         # 搜索结果
-        header = QLabel("词条库")
-        header.setStyleSheet("font-weight: bold; color: gray;")
+        header = BodyLabel("词条库")
         layout.addWidget(header)
-        self._result_list = QListWidget()
+        self._result_list = ListWidget()
         self._result_list.setMaximumHeight(180)
         self._result_list.itemDoubleClicked.connect(self._on_add_item)
         layout.addWidget(self._result_list)
 
         # 已选词条
         selected_header = QHBoxLayout()
-        selected_label = QLabel("已选词条")
-        selected_label.setStyleSheet("font-weight: bold; color: gray;")
-        selected_header.addWidget(selected_label)
+        selected_header.addWidget(BodyLabel("已选词条"))
         selected_header.addStretch()
-        remove_btn = QPushButton("删除选中")
+        remove_btn = PushButton("删除选中")
         remove_btn.setFixedWidth(80)
         remove_btn.clicked.connect(self._on_remove)
         selected_header.addWidget(remove_btn)
         layout.addLayout(selected_header)
 
-        self._selected_list = QListWidget()
-        self._selected_list.setSelectionMode(QListWidget.ExtendedSelection)
+        self._selected_list = ListWidget()
+        self._selected_list.setSelectionMode(ListWidget.ExtendedSelection)
         layout.addWidget(self._selected_list)
 
-        # 初始显示全部词条
         self._update_results(self._vocabulary)
 
     def _on_search(self, text: str):

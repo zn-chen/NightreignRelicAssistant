@@ -3,15 +3,15 @@
 from __future__ import annotations
 
 import json
-from PySide6.QtWidgets import (
-    QLineEdit, QTabWidget,
-    QInputDialog, QMessageBox, QFileDialog,
+from PySide6.QtWidgets import QVBoxLayout, QHBoxLayout, QWidget, QListWidgetItem
+from qfluentwidgets import (
+    PushButton, BodyLabel, MessageBox, ListWidget, TabWidget,
 )
 
 from nra.models.preset_manager import PresetManager
 from nra.models.vocabulary import VocabularyLoader
 from nra.ui.widgets.affix_editor import AffixEditor
-from nra.ui.widgets.helpers import make_title
+from nra.ui.widgets.helpers import make_title, make_card
 from nra.ui.widgets.list_detail_layout import ListDetailLayout
 
 
@@ -26,22 +26,38 @@ class CommonPage(ListDetailLayout):
         self._refresh_list()
 
     def _setup(self):
-        # 左侧
-        self._left_layout.insertWidget(0, make_title("通用词条组"))
+        # 左侧标题行
+        title_row = QHBoxLayout()
+        title_row.addWidget(make_title("通用词条组"))
+        title_row.addStretch()
+
+        export_btn = PushButton("↑")
+        export_btn.setFixedSize(28, 28)
+        export_btn.setToolTip("导出")
+        export_btn.clicked.connect(self._on_export)
+        title_row.addWidget(export_btn)
+
+        import_btn = PushButton("↓")
+        import_btn.setFixedSize(28, 28)
+        import_btn.setToolTip("导入")
+        import_btn.clicked.connect(self._on_import)
+        title_row.addWidget(import_btn)
+
+        add_btn = PushButton("+")
+        add_btn.setFixedSize(28, 28)
+        add_btn.setToolTip("新建通用组")
+        add_btn.clicked.connect(self._on_add)
+        title_row.addWidget(add_btn)
+
+        self._left_layout.insertLayout(0, title_row)
         self._list.currentRowChanged.connect(self._on_selection_changed)
-        self._add_left_buttons(
-            [("新建", self._on_add), ("删除", self._on_delete)],
-            [("导出", self._on_export_single), ("导入", self._on_import_single)],
-            [("批量导出", self._on_export_all), ("批量导入", self._on_import_all)],
-        )
 
         # 右侧
         rl = self._right_layout
 
-        from nra.ui.widgets.helpers import make_card
-
+        from qfluentwidgets import LineEdit
         name_card, name_layout = make_card("名称")
-        self._name_edit = QLineEdit()
+        self._name_edit = LineEdit()
         self._name_edit.setPlaceholderText("组名称")
         self._name_edit.editingFinished.connect(self._on_name_changed)
         name_layout.addWidget(self._name_edit)
@@ -54,7 +70,7 @@ class CommonPage(ListDetailLayout):
         deepnight_neg_vocab = self._vl.load(["deepnight_neg.txt"])
         all_vocab = self._vl.load(["normal.txt", "normal_special.txt", "deepnight_pos.txt", "deepnight_neg.txt"])
 
-        self._tabs = QTabWidget()
+        self._tabs = TabWidget()
 
         self._normal_editor = AffixEditor(normal_vocab)
         self._normal_editor.affixes_changed.connect(self._on_normal_changed)
@@ -75,13 +91,33 @@ class CommonPage(ListDetailLayout):
         affix_layout.addWidget(self._tabs)
         rl.addWidget(affix_card, 1)
 
+    # ── 列表项 ──
+
+    def _make_list_item_widget(self, name: str, group_id: str) -> QWidget:
+        widget = QWidget()
+        layout = QHBoxLayout(widget)
+        layout.setContentsMargins(4, 2, 4, 2)
+        layout.setSpacing(4)
+        label = BodyLabel(name)
+        layout.addWidget(label, 1)
+        del_btn = PushButton("×")
+        del_btn.setFixedSize(22, 22)
+        del_btn.setToolTip("删除")
+        del_btn.clicked.connect(lambda _, gid=group_id: self._on_delete_by_id(gid))
+        layout.addWidget(del_btn)
+        return widget
+
     # ── 列表操作 ──
 
     def _refresh_list(self):
         self._list.blockSignals(True)
         self._list.clear()
         for g in self._pm.common_groups:
-            self._list.addItem(g["name"])
+            item = QListWidgetItem()
+            widget = self._make_list_item_widget(g["name"], g["id"])
+            item.setSizeHint(widget.sizeHint())
+            self._list.addItem(item)
+            self._list.setItemWidget(item, widget)
         self._list.blockSignals(False)
 
     def _on_selection_changed(self, row: int):
@@ -99,6 +135,7 @@ class CommonPage(ListDetailLayout):
         self._blacklist_editor.set_affixes(group.get("blacklist_affixes", []))
 
     def _on_add(self):
+        from PySide6.QtWidgets import QInputDialog
         name, ok = QInputDialog.getText(self, "新建通用词条组", "组名:")
         if not ok or not name.strip():
             return
@@ -106,76 +143,75 @@ class CommonPage(ListDetailLayout):
         self._refresh_list()
         self._list.setCurrentRow(self._list.count() - 1)
 
-    def _on_delete(self):
-        row = self._list.currentRow()
-        if row < 0:
+    def _on_delete_by_id(self, group_id: str):
+        group = self._pm.get_common_group(group_id)
+        if group is None:
             return
-        group = self._pm.common_groups[row]
-        answer = QMessageBox.question(self, "确认删除",
-            f"确定删除通用词条组 \"{group['name']}\" 吗？\n引用此组的 构筑 将自动解除关联。")
-        if answer != QMessageBox.Yes:
+        w = MessageBox("确认删除",
+            f"确定删除通用词条组 \"{group['name']}\" 吗？\n引用此组的构筑将自动解除关联。", self)
+        if not w.exec():
             return
-        self._pm.delete_common_group(group["id"])
-        self._current_group_id = None
-        self._hide_right()
+        self._pm.delete_common_group(group_id)
+        if self._current_group_id == group_id:
+            self._current_group_id = None
+            self._hide_right()
         self._refresh_list()
 
-    # ── 导入导出 ──
+    # ── 导出 ──
 
-    def _group_export_data(self, group: dict) -> dict:
-        return {k: v for k, v in group.items() if k != "id"}
-
-    def _on_export_single(self):
-        row = self._list.currentRow()
-        if row < 0:
-            QMessageBox.information(self, "提示", "请先选择一个通用组")
+    def _on_export(self):
+        if not self._pm.common_groups:
             return
-        group = self._pm.common_groups[row]
-        path, _ = QFileDialog.getSaveFileName(self, "导出通用组",
-            f"{group['name']}.json", "JSON (*.json)")
+        from PySide6.QtWidgets import QDialog, QDialogButtonBox, QFileDialog
+
+        dlg = QDialog(self)
+        dlg.setWindowTitle("选择要导出的通用组")
+        dlg.resize(300, 400)
+        dlg_layout = QVBoxLayout(dlg)
+        select_list = ListWidget()
+        select_list.setSelectionMode(ListWidget.MultiSelection)
+        for g in self._pm.common_groups:
+            select_list.addItem(g["name"])
+        select_list.selectAll()
+        dlg_layout.addWidget(select_list)
+        buttons = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel)
+        buttons.accepted.connect(dlg.accept)
+        buttons.rejected.connect(dlg.reject)
+        dlg_layout.addWidget(buttons)
+
+        if dlg.exec() != QDialog.Accepted:
+            return
+        selected_rows = [select_list.row(item) for item in select_list.selectedItems()]
+        if not selected_rows:
+            return
+
+        selected = [self._pm.common_groups[r] for r in selected_rows]
+        data = [{k: v for k, v in g.items() if k != "id"} for g in selected]
+        default_name = f"{data[0]['name']}.json" if len(data) == 1 else "common_groups.json"
+
+        path, _ = QFileDialog.getSaveFileName(self, "导出通用组", default_name, "JSON (*.json)")
         if not path:
             return
+        out = data if len(data) > 1 else data[0]
         with open(path, "w", encoding="utf-8") as f:
-            json.dump(self._group_export_data(group), f, ensure_ascii=False, indent=2)
+            json.dump(out, f, ensure_ascii=False, indent=2)
 
-    def _on_import_single(self):
+    # ── 导入 ──
+
+    def _on_import(self):
+        from PySide6.QtWidgets import QFileDialog
         path, _ = QFileDialog.getOpenFileName(self, "导入通用组", "", "JSON (*.json)")
         if not path:
             return
         with open(path, "r", encoding="utf-8") as f:
             data = json.load(f)
-        name = data.get("name", "导入的通用组")
-        group = self._pm.create_common_group(name)
-        self._pm.update_common_group(group["id"], **{k: v for k, v in data.items() if k in group and k != "id"})
-        self._refresh_list()
-        self._list.setCurrentRow(self._list.count() - 1)
-
-    def _on_export_all(self):
-        if not self._pm.common_groups:
-            QMessageBox.information(self, "提示", "没有可导出的通用组")
-            return
-        path, _ = QFileDialog.getSaveFileName(self, "批量导出通用组",
-            "common_groups.json", "JSON (*.json)")
-        if not path:
-            return
-        data = [self._group_export_data(g) for g in self._pm.common_groups]
-        with open(path, "w", encoding="utf-8") as f:
-            json.dump(data, f, ensure_ascii=False, indent=2)
-
-    def _on_import_all(self):
-        path, _ = QFileDialog.getOpenFileName(self, "批量导入通用组", "", "JSON (*.json)")
-        if not path:
-            return
-        with open(path, "r", encoding="utf-8") as f:
-            data = json.load(f)
-        if not isinstance(data, list):
-            QMessageBox.warning(self, "格式错误", "批量导入需要 JSON 数组格式")
-            return
-        for item in data:
+        items = data if isinstance(data, list) else [data]
+        for item in items:
             name = item.get("name", "导入的通用组")
             group = self._pm.create_common_group(name)
             self._pm.update_common_group(group["id"], **{k: v for k, v in item.items() if k in group and k != "id"})
         self._refresh_list()
+        self._list.setCurrentRow(self._list.count() - 1)
 
     # ── 自动保存 ──
 
@@ -186,9 +222,11 @@ class CommonPage(ListDetailLayout):
         if not new_name:
             return
         self._pm.update_common_group(self._current_group_id, name=new_name)
-        row = self._list.currentRow()
-        if row >= 0:
-            self._list.item(row).setText(new_name)
+        self._refresh_list()
+        for i, g in enumerate(self._pm.common_groups):
+            if g["id"] == self._current_group_id:
+                self._list.setCurrentRow(i)
+                break
 
     def _on_normal_changed(self, affixes):
         if self._current_group_id:

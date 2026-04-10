@@ -1,8 +1,7 @@
-"""主题 — 使用 Fluent Design"""
+"""主题"""
 
-from PySide6.QtWidgets import QApplication
 from qfluentwidgets import setTheme, Theme
 
 
-def apply_theme(app: QApplication):
+def apply_theme():
     setTheme(Theme.LIGHT)

@@ -1,10 +1,10 @@
 """左列表 + 右详情 布局模板"""
 
 from PySide6.QtWidgets import (
-    QWidget, QVBoxLayout, QHBoxLayout, QListWidget,
-    QPushButton, QScrollArea, QFrame, QSizePolicy, QSpacerItem,
+    QWidget, QVBoxLayout, QHBoxLayout,
+    QScrollArea, QFrame, QSizePolicy, QSpacerItem,
 )
-from PySide6.QtCore import Qt
+from qfluentwidgets import ListWidget, PushButton
 
 
 class ListDetailLayout(QWidget):
@@ -12,7 +12,6 @@ class ListDetailLayout(QWidget):
     左右分栏布局模板:
     - 左侧: 标题 + 列表(撑满) + 按钮区, 固定宽度
     - 右侧: 可滚动详情面板, 撑满剩余宽度, 无选中时隐藏
-    - 右侧隐藏时, 左侧靠左对齐不居中
     """
 
     def __init__(self, parent=None):
@@ -25,7 +24,7 @@ class ListDetailLayout(QWidget):
         root.setSpacing(12)
         self._root_layout = root
 
-        # ── 左侧面板 ──
+        # 左侧面板
         self._left_panel = QWidget()
         self._left_panel.setFixedWidth(220)
         self._left_panel.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Expanding)
@@ -34,12 +33,12 @@ class ListDetailLayout(QWidget):
         self._left_layout.setContentsMargins(0, 0, 0, 0)
         self._left_layout.setSpacing(8)
 
-        self._list = QListWidget()
+        self._list = ListWidget()
         self._left_layout.addWidget(self._list, 1)
 
         root.addWidget(self._left_panel)
 
-        # ── 右侧面板 ──
+        # 右侧面板
         self._scroll = QScrollArea()
         self._scroll.setWidgetResizable(True)
         self._scroll.setFrameShape(QFrame.NoFrame)
@@ -54,7 +53,7 @@ class ListDetailLayout(QWidget):
         self._scroll.setVisible(False)
         root.addWidget(self._scroll, 1)
 
-        # ── 右侧占位 spacer (右侧隐藏时撑满, 防止左侧居中) ──
+        # 右侧占位 spacer
         self._placeholder = QSpacerItem(0, 0, QSizePolicy.Expanding, QSizePolicy.Minimum)
         root.addSpacerItem(self._placeholder)
 
@@ -63,7 +62,7 @@ class ListDetailLayout(QWidget):
             row = QHBoxLayout()
             row.setSpacing(6)
             for label, callback in row_items:
-                btn = QPushButton(label)
+                btn = PushButton(label)
                 btn.clicked.connect(callback)
                 row.addWidget(btn)
             self._left_layout.addLayout(row)
