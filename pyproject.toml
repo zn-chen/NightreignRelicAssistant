@@ -6,7 +6,9 @@ build-backend = "setuptools.build_meta"
 name = "nightreign-relic-assistant"
 version = "0.1.0"
 description = "Nightreign Relic Assistant rewrite"
+readme = "README.md"
 requires-python = ">=3.10"
+license = {text = "MIT"}
 dependencies = [
   "numpy>=1.21.0",
   "onnxruntime>=1.16.0",
