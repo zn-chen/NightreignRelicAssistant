@@ -8,7 +8,11 @@ def main():
     from PySide6.QtWidgets import QApplication
     from nra.ui.main_window import MainWindow
 
+    # 强制浅色模式，不被 macOS 暗色主题影响
+    os.environ["QT_QPA_PLATFORM_THEME"] = ""
+
     app = QApplication(sys.argv)
+    app.setStyle("Fusion")
 
     from nra.ui.theme import apply_theme
     apply_theme()
