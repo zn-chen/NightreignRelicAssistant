@@ -24,7 +24,7 @@ class MainWindow(QMainWindow):
         tabs = QTabWidget()
 
         self._shop_page = ShopPage()
-        tabs.addTab(self._shop_page, "商店筛选")
+        tabs.addTab(self._shop_page, "刷石")
 
         self._repo_page = RepoPage()
         tabs.addTab(self._repo_page, "仓库整理")
