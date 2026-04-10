@@ -137,9 +137,10 @@ class BuildPage(QWidget):
 
         right_layout.addWidget(self._tabs)
 
-        self._right.setVisible(False)
         scroll.setWidget(self._right)
-        splitter.addWidget(scroll)
+        self._scroll = scroll
+        self._scroll.setVisible(False)
+        splitter.addWidget(self._scroll)
         splitter.setSizes([220, 580])
         splitter.setStretchFactor(0, 1)
         splitter.setStretchFactor(1, 3)
@@ -186,11 +187,11 @@ class BuildPage(QWidget):
     def _on_selection_changed(self, row: int):
         if row < 0 or row >= len(self._pm.builds):
             self._current_build_id = None
-            self._right.setVisible(False)
+            self._scroll.setVisible(False)
             return
         build = self._pm.builds[row]
         self._current_build_id = build["id"]
-        self._right.setVisible(True)
+        self._scroll.setVisible(True)
 
         self._name_edit.setText(build["name"])
         self._min_spin.blockSignals(True)
@@ -224,7 +225,7 @@ class BuildPage(QWidget):
             return
         self._pm.delete_build(build["id"])
         self._current_build_id = None
-        self._right.setVisible(False)
+        self._scroll.setVisible(False)
         self._refresh_list()
 
     # ── 导入导出 ──
