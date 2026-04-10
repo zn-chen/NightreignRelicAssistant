@@ -5,20 +5,7 @@ import os
 
 
 def main():
-    from PySide6.QtWidgets import QApplication
-    from nra.ui.main_window import MainWindow
-
-    app = QApplication(sys.argv)
-
-    from nra.ui.theme import apply_theme
-    apply_theme()
-
-    data_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "data")
-    data_dir = os.path.normpath(data_dir)
-
-    window = MainWindow(data_dir=data_dir)
-    window.show()
-    sys.exit(app.exec())
+    pass
 
 
 if __name__ == "__main__":
