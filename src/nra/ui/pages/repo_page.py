@@ -6,7 +6,7 @@ from PySide6.QtWidgets import (
     QTextEdit, QLabel,
 )
 from PySide6.QtCore import Qt
-from nra.ui.widgets.helpers import make_title
+from nra.ui.widgets.helpers import make_card
 
 
 class RepoPage(QWidget):
@@ -21,51 +21,46 @@ class RepoPage(QWidget):
 
         # 左侧: 配置区
         config_panel = QVBoxLayout()
-        config_panel.setSpacing(8)
+        config_panel.setSpacing(12)
 
         # 模式
-        config_panel.addWidget(make_title("模式"))
-
+        mode_card, mode_layout = make_card("模式")
         mode_row = QHBoxLayout()
         mode_row.addWidget(QLabel("遗物类型:"))
         self._mode_combo = QComboBox()
         self._mode_combo.addItems(["普通", "深夜"])
         mode_row.addWidget(self._mode_combo)
-        config_panel.addLayout(mode_row)
+        mode_layout.addLayout(mode_row)
 
         clean_row = QHBoxLayout()
         clean_row.addWidget(QLabel("清理模式:"))
         self._clean_mode_combo = QComboBox()
         self._clean_mode_combo.addItems(["售出", "收藏"])
         clean_row.addWidget(self._clean_mode_combo)
-        config_panel.addLayout(clean_row)
-
-        config_panel.addSpacing(8)
+        mode_layout.addLayout(clean_row)
+        config_panel.addWidget(mode_card)
 
         # 匹配设置
-        config_panel.addWidget(make_title("匹配设置"))
-
+        match_card, match_layout = make_card("匹配设置")
         match_row = QHBoxLayout()
         match_row.addWidget(QLabel("匹配模式:"))
         self._match_combo = QComboBox()
         self._match_combo.addItems(["双有效", "三有效"])
         match_row.addWidget(self._match_combo)
-        config_panel.addLayout(match_row)
+        match_layout.addLayout(match_row)
 
         build_row = QHBoxLayout()
         build_row.addWidget(QLabel("使用 Build:"))
         self._build_combo = QComboBox()
         build_row.addWidget(self._build_combo)
-        config_panel.addLayout(build_row)
-
-        config_panel.addSpacing(8)
+        match_layout.addLayout(build_row)
+        config_panel.addWidget(match_card)
 
         # 数量设置
-        config_panel.addWidget(make_title("数量设置"))
-
+        count_card, count_layout = make_card("数量设置")
         self._auto_detect_cb = QCheckBox("自动检测遗物数量")
         self._auto_detect_cb.setChecked(True)
-        config_panel.addWidget(self._auto_detect_cb)
+        count_layout.addWidget(self._auto_detect_cb)
 
         max_row = QHBoxLayout()
         max_row.addWidget(QLabel("最大检测数量:"))
@@ -73,12 +68,11 @@ class RepoPage(QWidget):
         self._max_count.setRange(0, 999)
         self._max_count.setValue(0)
         max_row.addWidget(self._max_count)
-        config_panel.addLayout(max_row)
+        count_layout.addLayout(max_row)
 
         self._allow_favorited_cb = QCheckBox("允许操作已收藏遗物")
-        config_panel.addWidget(self._allow_favorited_cb)
-
-        config_panel.addSpacing(8)
+        count_layout.addWidget(self._allow_favorited_cb)
+        config_panel.addWidget(count_card)
 
         # 按钮
         btn_layout = QHBoxLayout()
@@ -97,11 +91,10 @@ class RepoPage(QWidget):
 
         # 右侧
         right_panel = QVBoxLayout()
-        right_panel.setSpacing(8)
+        right_panel.setSpacing(12)
 
         # 统计
-        right_panel.addWidget(make_title("统计"))
-
+        stats_card, stats_card_layout = make_card("统计")
         stats_layout = QHBoxLayout()
         stats_layout.setSpacing(16)
         self._stat_labels = {}
@@ -118,14 +111,14 @@ class RepoPage(QWidget):
             stat.addWidget(name_label)
             stats_layout.addLayout(stat)
             self._stat_labels[name] = count_label
-        right_panel.addLayout(stats_layout)
-
-        right_panel.addSpacing(8)
+        stats_card_layout.addLayout(stats_layout)
+        right_panel.addWidget(stats_card)
 
         # 日志
-        right_panel.addWidget(make_title("日志"))
+        log_card, log_layout = make_card("日志")
         self._log_text = QTextEdit()
         self._log_text.setReadOnly(True)
-        right_panel.addWidget(self._log_text, 1)
+        log_layout.addWidget(self._log_text)
+        right_panel.addWidget(log_card, 1)
 
         layout.addLayout(right_panel, 2)

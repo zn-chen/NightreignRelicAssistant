@@ -6,7 +6,7 @@ from PySide6.QtWidgets import (
     QTextEdit, QLabel,
 )
 from PySide6.QtCore import Qt
-from nra.ui.widgets.helpers import make_title
+from nra.ui.widgets.helpers import make_card
 
 
 class ShopPage(QWidget):
@@ -21,23 +21,20 @@ class ShopPage(QWidget):
 
         # 左侧: 配置区
         config_panel = QVBoxLayout()
-        config_panel.setSpacing(8)
+        config_panel.setSpacing(12)
 
         # 匹配设置
-        config_panel.addWidget(make_title("匹配设置"))
-
+        match_card, match_layout = make_card("匹配设置")
         match_row = QHBoxLayout()
         match_row.addWidget(QLabel("匹配模式:"))
         self._match_combo = QComboBox()
         self._match_combo.addItems(["双有效", "三有效"])
         match_row.addWidget(self._match_combo)
-        config_panel.addLayout(match_row)
-
-        config_panel.addSpacing(8)
+        match_layout.addLayout(match_row)
+        config_panel.addWidget(match_card)
 
         # 停止条件
-        config_panel.addWidget(make_title("停止条件"))
-
+        stop_card, stop_layout = make_card("停止条件")
         currency_row = QHBoxLayout()
         currency_row.addWidget(QLabel("暗痕阈值:"))
         self._currency_threshold = QSpinBox()
@@ -45,9 +42,8 @@ class ShopPage(QWidget):
         self._currency_threshold.setValue(10000)
         self._currency_threshold.setSingleStep(1000)
         currency_row.addWidget(self._currency_threshold)
-        config_panel.addLayout(currency_row)
-
-        config_panel.addSpacing(8)
+        stop_layout.addLayout(currency_row)
+        config_panel.addWidget(stop_card)
 
         # 按钮
         btn_layout = QHBoxLayout()
@@ -66,11 +62,10 @@ class ShopPage(QWidget):
 
         # 右侧
         right_panel = QVBoxLayout()
-        right_panel.setSpacing(8)
+        right_panel.setSpacing(12)
 
         # 统计
-        right_panel.addWidget(make_title("统计"))
-
+        stats_card, stats_card_layout = make_card("统计")
         stats_layout = QHBoxLayout()
         stats_layout.setSpacing(16)
         self._stat_labels = {}
@@ -87,14 +82,14 @@ class ShopPage(QWidget):
             stat.addWidget(name_label)
             stats_layout.addLayout(stat)
             self._stat_labels[name] = count_label
-        right_panel.addLayout(stats_layout)
-
-        right_panel.addSpacing(8)
+        stats_card_layout.addLayout(stats_layout)
+        right_panel.addWidget(stats_card)
 
         # 日志
-        right_panel.addWidget(make_title("日志"))
+        log_card, log_layout = make_card("日志")
         self._log_text = QTextEdit()
         self._log_text.setReadOnly(True)
-        right_panel.addWidget(self._log_text, 1)
+        log_layout.addWidget(self._log_text)
+        right_panel.addWidget(log_card, 1)
 
         layout.addLayout(right_panel, 2)
