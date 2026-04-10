@@ -5,11 +5,7 @@ Desktop.ini
 $RECYCLE.BIN/
 
 # Editor and IDE settings
-.vscode/*
-!.vscode/settings.json
-!.vscode/extensions.json
-!.vscode/launch.json
-!.vscode/tasks.json
+.vscode/
 .idea/
 .vs/
 *.iml
@@ -82,16 +78,6 @@ data/save_backups/
 data/settings.json
 data/presets.json
 
-# Project-local debug assets
-tmp/debug/
-tmp/*.png
-tmp/*.jpg
-tmp/*.jpeg
-tmp/*.webp
-tmp/*.bmp
-
-# Project-local scratch files
-tmp/test.py
-tmp/*.md
-tmp/参考/
+# Project-local scratch workspace
+tmp/
 
