@@ -3,7 +3,8 @@
 from PySide6.QtWidgets import QMainWindow, QTabWidget
 from nra.models.preset_manager import PresetManager
 from nra.models.vocabulary import VocabularyLoader
-from nra.ui.pages.home_page import HomePage
+from nra.ui.pages.shop_page import ShopPage
+from nra.ui.pages.repo_page import RepoPage
 from nra.ui.pages.build_page import BuildPage
 from nra.ui.pages.common_page import CommonPage
 from nra.ui.pages.blacklist_page import BlacklistPage
@@ -22,8 +23,11 @@ class MainWindow(QMainWindow):
 
         tabs = QTabWidget()
 
-        self._home_page = HomePage()
-        tabs.addTab(self._home_page, "主页")
+        self._shop_page = ShopPage()
+        tabs.addTab(self._shop_page, "商店筛选")
+
+        self._repo_page = RepoPage()
+        tabs.addTab(self._repo_page, "仓库整理")
 
         self._build_page = BuildPage(self._preset_manager, self._vocab_loader)
         tabs.addTab(self._build_page, "Build 管理")
