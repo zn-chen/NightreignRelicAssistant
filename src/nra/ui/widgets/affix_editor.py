@@ -27,11 +27,18 @@ class AffixEditor(QWidget):
         self._search.textChanged.connect(self._filter)
         layout.addWidget(self._search)
 
+        vocab_row = QHBoxLayout()
         vocab_label = QLabel("词条库")
         vocab_label.setStyleSheet("font-weight: bold;")
-        layout.addWidget(vocab_label)
+        vocab_row.addWidget(vocab_label)
+        vocab_row.addStretch()
+        add_btn = QPushButton("添加选中 ↓")
+        add_btn.clicked.connect(self._add_selected)
+        vocab_row.addWidget(add_btn)
+        layout.addLayout(vocab_row)
 
         self._vocab_list = QListWidget()
+        self._vocab_list.setSelectionMode(QListWidget.ExtendedSelection)
         self._vocab_list.setMaximumHeight(200)
         self._vocab_list.itemDoubleClicked.connect(self._add_item)
         layout.addWidget(self._vocab_list)
@@ -68,6 +75,18 @@ class AffixEditor(QWidget):
             self._selected_list.addItem(text)
             self._refresh_vocab(self._search.text())
             self.affixes_changed.emit(list(self._selected))
+
+    def _add_selected(self):
+        items = self._vocab_list.selectedItems()
+        if not items:
+            return
+        for item in items:
+            text = item.text()
+            if text not in self._selected:
+                self._selected.append(text)
+                self._selected_list.addItem(text)
+        self._refresh_vocab(self._search.text())
+        self.affixes_changed.emit(list(self._selected))
 
     def _remove_selected(self):
         for item in self._selected_list.selectedItems():
