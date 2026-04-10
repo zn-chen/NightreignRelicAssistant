@@ -2,7 +2,7 @@
 
 from PySide6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout,
-    QSpinBox, QPushButton, QTextEdit, QLabel,
+    QSpinBox, QCheckBox, QPushButton, QTextEdit, QLabel,
 )
 from PySide6.QtCore import Qt
 from nra.ui.widgets.helpers import make_card
@@ -35,11 +35,18 @@ class RepoPage(QWidget):
 
         # 数量设置
         count_card, count_layout = make_card("数量设置")
+
+        self._no_limit_cb = QCheckBox("不限制")
+        self._no_limit_cb.setChecked(True)
+        self._no_limit_cb.stateChanged.connect(self._on_no_limit_toggled)
+        count_layout.addWidget(self._no_limit_cb)
+
         max_row = QHBoxLayout()
         max_row.addWidget(QLabel("最大检测数:"))
         self._max_count = QSpinBox()
         self._max_count.setRange(1, 999)
         self._max_count.setValue(100)
+        self._max_count.setEnabled(False)
         max_row.addWidget(self._max_count)
         count_layout.addLayout(max_row)
         config_panel.addWidget(count_card)
@@ -92,3 +99,6 @@ class RepoPage(QWidget):
         right_panel.addWidget(log_card, 1)
 
         layout.addLayout(right_panel, 2)
+
+    def _on_no_limit_toggled(self, state):
+        self._max_count.setEnabled(not bool(state))

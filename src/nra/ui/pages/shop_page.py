@@ -2,7 +2,7 @@
 
 from PySide6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout,
-    QComboBox, QSpinBox, QPushButton,
+    QComboBox, QSpinBox, QPushButton, QCheckBox,
     QTextEdit, QLabel,
 )
 from PySide6.QtCore import Qt
@@ -35,12 +35,19 @@ class ShopPage(QWidget):
 
         # 停止条件
         stop_card, stop_layout = make_card("停止条件")
+
+        self._no_limit_cb = QCheckBox("不限制")
+        self._no_limit_cb.setChecked(True)
+        self._no_limit_cb.stateChanged.connect(self._on_no_limit_toggled)
+        stop_layout.addWidget(self._no_limit_cb)
+
         currency_row = QHBoxLayout()
         currency_row.addWidget(QLabel("暗痕阈值:"))
         self._currency_threshold = QSpinBox()
         self._currency_threshold.setRange(0, 999999)
         self._currency_threshold.setValue(10000)
         self._currency_threshold.setSingleStep(1000)
+        self._currency_threshold.setEnabled(False)
         currency_row.addWidget(self._currency_threshold)
         stop_layout.addLayout(currency_row)
         config_panel.addWidget(stop_card)
@@ -93,3 +100,6 @@ class ShopPage(QWidget):
         right_panel.addWidget(log_card, 1)
 
         layout.addLayout(right_panel, 2)
+
+    def _on_no_limit_toggled(self, state):
+        self._currency_threshold.setEnabled(not bool(state))
