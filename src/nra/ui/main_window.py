@@ -30,8 +30,8 @@ class MainWindow(QMainWindow):
         # 导航栏
         nav = QWidget()
         nav_layout = QHBoxLayout(nav)
-        nav_layout.setContentsMargins(12, 8, 12, 8)
-        nav_layout.setSpacing(4)
+        nav_layout.setContentsMargins(0, 0, 0, 0)
+        nav_layout.setSpacing(0)
 
         self._stack = QStackedWidget()
         self._nav_group = QButtonGroup(self)
