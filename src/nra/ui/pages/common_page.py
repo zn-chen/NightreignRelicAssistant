@@ -4,89 +4,46 @@ from __future__ import annotations
 
 import json
 from PySide6.QtWidgets import (
-    QWidget, QVBoxLayout, QHBoxLayout,
-    QListWidget, QPushButton, QLineEdit,
-    QTabWidget, QInputDialog, QMessageBox, QFileDialog,
+    QLineEdit, QTabWidget,
+    QInputDialog, QMessageBox, QFileDialog,
 )
-from PySide6.QtCore import Qt
 
 from nra.models.preset_manager import PresetManager
 from nra.models.vocabulary import VocabularyLoader
 from nra.ui.widgets.affix_editor import AffixEditor
 from nra.ui.widgets.helpers import make_title
+from nra.ui.widgets.list_detail_layout import ListDetailLayout
 
 
-class CommonPage(QWidget):
+class CommonPage(ListDetailLayout):
 
     def __init__(self, preset_manager: PresetManager, vocab_loader: VocabularyLoader, parent=None):
-        super().__init__(parent)
         self._pm = preset_manager
         self._vl = vocab_loader
         self._current_group_id: str | None = None
-        self._init_ui()
+        super().__init__(parent)
+        self._setup()
         self._refresh_list()
 
-    def _init_ui(self):
-        root = QHBoxLayout(self)
-        root.setContentsMargins(12, 12, 12, 12)
-        root.setSpacing(12)
-
+    def _setup(self):
         # 左侧
-        left = QWidget()
-        left.setFixedWidth(220)
-        left_layout = QVBoxLayout(left)
-        left_layout.setContentsMargins(0, 0, 0, 0)
-        left_layout.setSpacing(8)
-        left_layout.addWidget(make_title("通用词条组"))
-
-        self._list = QListWidget()
+        self._left_layout.insertWidget(0, make_title("通用词条组"))
         self._list.currentRowChanged.connect(self._on_selection_changed)
-        left_layout.addWidget(self._list)
-
-        btn_row = QHBoxLayout()
-        btn_row.setSpacing(6)
-        add_btn = QPushButton("新建")
-        add_btn.clicked.connect(self._on_add)
-        del_btn = QPushButton("删除")
-        del_btn.clicked.connect(self._on_delete)
-        btn_row.addWidget(add_btn)
-        btn_row.addWidget(del_btn)
-        left_layout.addLayout(btn_row)
-
-        io_row = QHBoxLayout()
-        io_row.setSpacing(6)
-        export_btn = QPushButton("导出")
-        export_btn.clicked.connect(self._on_export_single)
-        import_btn = QPushButton("导入")
-        import_btn.clicked.connect(self._on_import_single)
-        io_row.addWidget(export_btn)
-        io_row.addWidget(import_btn)
-        left_layout.addLayout(io_row)
-
-        batch_row = QHBoxLayout()
-        batch_row.setSpacing(6)
-        batch_export_btn = QPushButton("批量导出")
-        batch_export_btn.clicked.connect(self._on_export_all)
-        batch_import_btn = QPushButton("批量导入")
-        batch_import_btn.clicked.connect(self._on_import_all)
-        batch_row.addWidget(batch_export_btn)
-        batch_row.addWidget(batch_import_btn)
-        left_layout.addLayout(batch_row)
-
-        root.addWidget(left)
+        self._add_left_buttons(
+            [("新建", self._on_add), ("删除", self._on_delete)],
+            [("导出", self._on_export_single), ("导入", self._on_import_single)],
+            [("批量导出", self._on_export_all), ("批量导入", self._on_import_all)],
+        )
 
         # 右侧
-        self._right = QWidget()
-        right_layout = QVBoxLayout(self._right)
-        right_layout.setContentsMargins(8, 0, 0, 0)
-        right_layout.setSpacing(10)
+        rl = self._right_layout
 
-        right_layout.addWidget(make_title("组编辑"))
+        rl.addWidget(make_title("组编辑"))
 
         self._name_edit = QLineEdit()
         self._name_edit.setPlaceholderText("组名称")
         self._name_edit.editingFinished.connect(self._on_name_changed)
-        right_layout.addWidget(self._name_edit)
+        rl.addWidget(self._name_edit)
 
         normal_vocab = self._vl.load(["normal.txt", "normal_special.txt"])
         deepnight_pos_vocab = self._vl.load(["deepnight_pos.txt"])
@@ -111,10 +68,7 @@ class CommonPage(QWidget):
         self._blacklist_editor.affixes_changed.connect(self._on_blacklist_changed)
         self._tabs.addTab(self._blacklist_editor, "黑名单")
 
-        right_layout.addWidget(self._tabs)
-
-        self._right.setVisible(False)
-        root.addWidget(self._right, 1)
+        rl.addWidget(self._tabs)
 
     # ── 列表操作 ──
 
@@ -128,11 +82,11 @@ class CommonPage(QWidget):
     def _on_selection_changed(self, row: int):
         if row < 0 or row >= len(self._pm.common_groups):
             self._current_group_id = None
-            self._right.setVisible(False)
+            self._hide_right()
             return
         group = self._pm.common_groups[row]
         self._current_group_id = group["id"]
-        self._right.setVisible(True)
+        self._show_right()
         self._name_edit.setText(group["name"])
         self._normal_editor.set_affixes(group.get("normal_affixes", []))
         self._deepnight_editor.set_affixes(group.get("deepnight_affixes", []))
@@ -158,7 +112,7 @@ class CommonPage(QWidget):
             return
         self._pm.delete_common_group(group["id"])
         self._current_group_id = None
-        self._right.setVisible(False)
+        self._hide_right()
         self._refresh_list()
 
     # ── 导入导出 ──

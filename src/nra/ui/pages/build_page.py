@@ -4,95 +4,46 @@ from __future__ import annotations
 
 import json
 from PySide6.QtWidgets import (
-    QWidget, QVBoxLayout, QHBoxLayout,
-    QListWidget, QPushButton, QLineEdit,
-    QGroupBox, QCheckBox, QSpinBox, QTabWidget,
-    QScrollArea, QInputDialog, QMessageBox, QFileDialog,
-    QSizePolicy,
+    QLineEdit, QGroupBox, QCheckBox, QSpinBox, QTabWidget,
+    QInputDialog, QMessageBox, QFileDialog, QHBoxLayout,
 )
-from PySide6.QtCore import Qt
 
 from nra.models.preset_manager import PresetManager
 from nra.models.vocabulary import VocabularyLoader
 from nra.ui.widgets.affix_editor import AffixEditor
 from nra.ui.widgets.helpers import make_title
+from nra.ui.widgets.list_detail_layout import ListDetailLayout
 
 
-class BuildPage(QWidget):
+class BuildPage(ListDetailLayout):
 
     def __init__(self, preset_manager: PresetManager, vocab_loader: VocabularyLoader, parent=None):
-        super().__init__(parent)
         self._pm = preset_manager
         self._vl = vocab_loader
         self._current_build_id: str | None = None
-        self._init_ui()
+        super().__init__(parent)
+        self._setup()
         self._refresh_list()
 
-    def _init_ui(self):
-        root = QHBoxLayout(self)
-        root.setContentsMargins(12, 12, 12, 12)
-        root.setSpacing(12)
-
+    def _setup(self):
         # 左侧
-        left = QWidget()
-        left.setFixedWidth(220)
-        left_layout = QVBoxLayout(left)
-        left_layout.setContentsMargins(0, 0, 0, 0)
-        left_layout.setSpacing(8)
-        left_layout.addWidget(make_title("BUILD 列表"))
-
-        self._list = QListWidget()
+        self._left_layout.insertWidget(0, make_title("BUILD 列表"))
         self._list.currentRowChanged.connect(self._on_selection_changed)
-        left_layout.addWidget(self._list)
-
-        btn_row = QHBoxLayout()
-        btn_row.setSpacing(6)
-        add_btn = QPushButton("新建")
-        add_btn.clicked.connect(self._on_add)
-        del_btn = QPushButton("删除")
-        del_btn.clicked.connect(self._on_delete)
-        btn_row.addWidget(add_btn)
-        btn_row.addWidget(del_btn)
-        left_layout.addLayout(btn_row)
-
-        # 导入导出
-        io_row = QHBoxLayout()
-        io_row.setSpacing(6)
-        export_btn = QPushButton("导出")
-        export_btn.clicked.connect(self._on_export_single)
-        import_btn = QPushButton("导入")
-        import_btn.clicked.connect(self._on_import_single)
-        io_row.addWidget(export_btn)
-        io_row.addWidget(import_btn)
-        left_layout.addLayout(io_row)
-
-        batch_row = QHBoxLayout()
-        batch_row.setSpacing(6)
-        batch_export_btn = QPushButton("批量导出")
-        batch_export_btn.clicked.connect(self._on_export_all)
-        batch_import_btn = QPushButton("批量导入")
-        batch_import_btn.clicked.connect(self._on_import_all)
-        batch_row.addWidget(batch_export_btn)
-        batch_row.addWidget(batch_import_btn)
-        left_layout.addLayout(batch_row)
-
-        root.addWidget(left)
+        self._add_left_buttons(
+            [("新建", self._on_add), ("删除", self._on_delete)],
+            [("导出", self._on_export_single), ("导入", self._on_import_single)],
+            [("批量导出", self._on_export_all), ("批量导入", self._on_import_all)],
+        )
 
         # 右侧
-        scroll = QScrollArea()
-        scroll.setWidgetResizable(True)
+        rl = self._right_layout
 
-        self._right = QWidget()
-        right_layout = QVBoxLayout(self._right)
-        right_layout.setContentsMargins(8, 0, 0, 0)
-        right_layout.setSpacing(12)
-
-        right_layout.addWidget(make_title("BUILD 编辑"))
+        rl.addWidget(make_title("BUILD 编辑"))
 
         self._name_edit = QLineEdit()
         self._name_edit.setPlaceholderText("BUILD 名称")
         self._name_edit.editingFinished.connect(self._on_name_changed)
-        right_layout.addWidget(self._name_edit)
+        rl.addWidget(self._name_edit)
 
         min_row = QHBoxLayout()
         min_row.addWidget(make_title("最少命中词条数"))
@@ -103,15 +54,16 @@ class BuildPage(QWidget):
         self._min_spin.valueChanged.connect(self._on_min_matches_changed)
         min_row.addWidget(self._min_spin)
         min_row.addStretch()
-        right_layout.addLayout(min_row)
+        rl.addLayout(min_row)
 
         self._common_group_box = QGroupBox("引用通用词条组")
         self._common_group_box.setCheckable(True)
         self._common_group_box.setChecked(True)
         self._common_group_box.toggled.connect(self._on_include_common_toggled)
+        from PySide6.QtWidgets import QVBoxLayout
         self._common_group_layout = QVBoxLayout(self._common_group_box)
         self._common_group_layout.setSpacing(4)
-        right_layout.addWidget(self._common_group_box)
+        rl.addWidget(self._common_group_box)
 
         normal_vocab = self._vl.load(["normal.txt", "normal_special.txt"])
         deepnight_pos_vocab = self._vl.load(["deepnight_pos.txt"])
@@ -136,12 +88,7 @@ class BuildPage(QWidget):
         self._blacklist_editor.affixes_changed.connect(self._on_blacklist_changed)
         self._tabs.addTab(self._blacklist_editor, "黑名单")
 
-        right_layout.addWidget(self._tabs)
-
-        scroll.setWidget(self._right)
-        self._scroll = scroll
-        self._scroll.setVisible(False)
-        root.addWidget(self._scroll, 1)  # stretch=1, 右侧吃掉多余空间
+        rl.addWidget(self._tabs)
 
         self._populate_common_checkboxes()
 
@@ -185,11 +132,11 @@ class BuildPage(QWidget):
     def _on_selection_changed(self, row: int):
         if row < 0 or row >= len(self._pm.builds):
             self._current_build_id = None
-            self._scroll.setVisible(False)
+            self._hide_right()
             return
         build = self._pm.builds[row]
         self._current_build_id = build["id"]
-        self._scroll.setVisible(True)
+        self._show_right()
 
         self._name_edit.setText(build["name"])
         self._min_spin.blockSignals(True)
@@ -223,13 +170,12 @@ class BuildPage(QWidget):
             return
         self._pm.delete_build(build["id"])
         self._current_build_id = None
-        self._scroll.setVisible(False)
+        self._hide_right()
         self._refresh_list()
 
     # ── 导入导出 ──
 
     def _build_export_data(self, build: dict) -> dict:
-        """提取 build 的可导出数据（去掉 id 和 common_group_ids）"""
         return {k: v for k, v in build.items() if k not in ("id", "common_group_ids")}
 
     def _on_export_single(self):
@@ -242,9 +188,8 @@ class BuildPage(QWidget):
             f"{build['name']}.json", "JSON (*.json)")
         if not path:
             return
-        data = self._build_export_data(build)
         with open(path, "w", encoding="utf-8") as f:
-            json.dump(data, f, ensure_ascii=False, indent=2)
+            json.dump(self._build_export_data(build), f, ensure_ascii=False, indent=2)
 
     def _on_import_single(self):
         path, _ = QFileDialog.getOpenFileName(self, "导入 BUILD", "", "JSON (*.json)")
@@ -298,11 +243,11 @@ class BuildPage(QWidget):
         if row >= 0:
             self._list.item(row).setText(new_name)
 
-    def _on_min_matches_changed(self, value: int):
+    def _on_min_matches_changed(self, value):
         if self._current_build_id:
             self._pm.update_build(self._current_build_id, min_matches=value)
 
-    def _on_include_common_toggled(self, checked: bool):
+    def _on_include_common_toggled(self, checked):
         if self._current_build_id:
             self._pm.update_build(self._current_build_id, include_common=checked)
 
