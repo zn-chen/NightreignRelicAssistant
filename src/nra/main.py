@@ -10,6 +10,9 @@ def main():
 
     app = QApplication(sys.argv)
 
+    from nra.ui.style import STYLESHEET
+    app.setStyleSheet(STYLESHEET)
+
     data_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "data")
     data_dir = os.path.normpath(data_dir)
 

@@ -16,12 +16,12 @@ class HomePage(QWidget):
         layout.setAlignment(Qt.AlignCenter)
 
         title = QLabel("黑夜君临遗物助手")
-        title.setStyleSheet("font-size: 24pt; font-weight: bold;")
+        title.setStyleSheet("font-size: 24pt; font-weight: bold; color: #cdd6f4;")
         title.setAlignment(Qt.AlignCenter)
         layout.addWidget(title)
 
         version = QLabel("v0.1.0")
-        version.setStyleSheet("font-size: 14pt; color: gray;")
+        version.setStyleSheet("font-size: 14pt; color: #585b70;")
         version.setAlignment(Qt.AlignCenter)
         layout.addWidget(version)
 

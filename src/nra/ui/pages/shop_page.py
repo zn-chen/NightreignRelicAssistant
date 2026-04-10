@@ -103,7 +103,7 @@ class ShopPage(QWidget):
         for name in ["购买", "合格", "不合格", "售出"]:
             stat = QVBoxLayout()
             count_label = QLabel("0")
-            count_label.setStyleSheet("font-size: 18pt; font-weight: bold;")
+            count_label.setStyleSheet("font-size: 18pt; font-weight: bold; color: #89b4fa;")
             stat.addWidget(count_label)
             stat.addWidget(QLabel(name))
             stats_layout.addLayout(stat)
