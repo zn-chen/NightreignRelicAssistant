@@ -50,3 +50,28 @@ def apply_theme(app: QApplication):
     p.setColor(QPalette.PlaceholderText, QColor(170, 162, 150))
 
     app.setPalette(p)
+
+    # 复选框样式 — 明确的边框和选中标记
+    app.setStyleSheet("""
+        QCheckBox::indicator {
+            width: 16px;
+            height: 16px;
+            border: 2px solid #8C7355;
+            border-radius: 3px;
+            background: #FDFAF4;
+        }
+        QCheckBox::indicator:checked {
+            background: #8C7355;
+            image: none;
+        }
+        QCheckBox::indicator:checked::after {
+            color: white;
+        }
+        QCheckBox::indicator:hover {
+            border-color: #6B5740;
+        }
+        QCheckBox::indicator:disabled {
+            border-color: #C8C0B4;
+            background: #EBE6DC;
+        }
+    """)
