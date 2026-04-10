@@ -1,36 +1,97 @@
-# Python
-__pycache__/
-*.py[cod]
-*$py.class
-*.egg-info/
-*.egg
-dist/
-build/
-.eggs/
-
-# Virtual environments
-venv/
-.venv/
-env/
-
-# IDE
-.vscode/
-.idea/
-.claude/
-
-# OS
+# OS-generated files
 .DS_Store
 Thumbs.db
+Desktop.ini
+$RECYCLE.BIN/
 
-# Distribution
-*.spec
+# Editor and IDE settings
+.vscode/*
+!.vscode/settings.json
+!.vscode/extensions.json
+!.vscode/launch.json
+!.vscode/tasks.json
+.idea/
+.vs/
+*.iml
+*.suo
+*.user
+*.userossc
+*.sln.docstates
+*.swp
+*.swo
+*~
+.ropeproject/
+.spyproject/
 
-# User data
+# Local environment files
+.env
+.env.*
+!.env.example
+.python-version
+
+# Python bytecode and caches
+__pycache__/
+*.py[cod]
+*.pyd
+*.so
+*.dylib
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.pyre/
+.pytype/
+.hypothesis/
+.tox/
+.nox/
+.cache/
+.ipynb_checkpoints/
+.coverage
+.coverage.*
+coverage.xml
+htmlcov/
+pytestdebug.log
+
+# Virtual environments
+.venv/
+venv/
+env/
+ENV/
+__pypackages__/
+
+# Build and packaging artifacts
+build/
+dist/
+site/
+.eggs/
+*.egg-info/
+pip-wheel-metadata/
+*.whl
+.pyinstaller/
+
+# Logs and temporary traces
+*.log
+*.pid
+*.pid.lock
+*.orig
+*.rej
+
+# Project runtime data
+data/logs/
+data/history/
+data/save_backups/
 data/settings.json
 data/presets.json
-data/save_backups/
 
-# Debug
-debug/
-logs/
-*.log
+# Project-local debug assets
+tmp/debug/
+tmp/*.png
+tmp/*.jpg
+tmp/*.jpeg
+tmp/*.webp
+tmp/*.bmp
+
+# Project-local scratch files
+tmp/test.py
+tmp/*.md
+tmp/参考/
+
